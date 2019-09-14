@@ -38,7 +38,13 @@ namespace ServerConsole
                 Console.WriteLine("Password:");
                 pass = Console.ReadLine();
             } while (!server.LoginAdmin(username, pass));
-            Console.WriteLine("Successful!");
+            Console.WriteLine("ADMIN MENU");
+            Console.WriteLine("1-Registrar estudiante");
+            Console.WriteLine("username:");
+            string studentUsername = Console.ReadLine();
+            Console.WriteLine("password:");
+            string studentPass = Console.ReadLine();
+            server.addStudent(studentUsername, studentPass);
         }
     }
 }

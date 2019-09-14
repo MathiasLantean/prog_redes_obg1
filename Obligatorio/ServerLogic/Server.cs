@@ -13,9 +13,11 @@ namespace ServerLogic
     public class Server
     {
         private List<Admin> admins;
+        private List<Student> students;
 
         public Server()
         {
+            this.students = new List<Student>();
             this.admins = new List<Admin>();
             this.admins.Add(new Admin());
         }
@@ -36,12 +38,18 @@ namespace ServerLogic
         {
             User user = new User() { Username = username, Password = pass };
             Admin adminLog = new Admin() { User = user };
-            if (admins.Contains(adminLog))
+            if (this.admins.Contains(adminLog))
             {
-                Admin currentAdmin = admins.Find(x => x.Equals(adminLog));
+                Admin currentAdmin = this.admins.Find(x => x.Equals(adminLog));
                 return currentAdmin.User.Password == pass;
             }
             return false;
+        }
+
+        public void addStudent(string studentUsername, string studentPass)
+        {
+            User studentUser = new User() { Username = studentUsername, Password = studentPass };
+            this.students.Add(new Student() { User = studentUser });
         }
     }
 }
