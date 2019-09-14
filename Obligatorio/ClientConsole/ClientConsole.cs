@@ -12,7 +12,6 @@ namespace ClientConsole
     class ClientConsole
     {
         private static Client client = new Client();
-        private static Server server;
         private static string clientConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
         private static string initMenuPath = clientConsolePath + "\\Menus\\InitMenu.txt";
         private static string sessionMenuPath = clientConsolePath + "\\Menus\\sessionMenu.txt";
@@ -25,7 +24,7 @@ namespace ClientConsole
                 showMenu(initMenuPath);
                 Console.ReadLine();
                 Console.WriteLine("Estableciendo conexión con el servidor...");
-                //server = client.Connect();
+                client.Connect();
                 Console.WriteLine("Conexión establecida.\n");
                 bool getOutOfSessionMenu = false;
                 while (!getOutOfSessionMenu) {
@@ -68,10 +67,7 @@ namespace ClientConsole
                             }
                             break;
                         case 2:
-                            //server.Disconnect();
-                            //client.Disconnect();
-                            Console.WriteLine("\nCerrando la conexión...");
-                            Console.WriteLine("Conexión cerrada.\n\n");
+                            client.Disconnect();
                             getOutOfSessionMenu = true;
                             break;
                     }
