@@ -1,0 +1,5 @@
+--INICIO DE SESION--
+
+Seleccione una opcion:
+	1) Iniciar sesion.
+	2) Desconectarse.
