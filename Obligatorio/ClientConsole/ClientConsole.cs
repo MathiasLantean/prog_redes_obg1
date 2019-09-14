@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,6 @@ namespace ClientConsole
     class ClientConsole
     {
         private static Client client = new Client();
-        private static Server server;
         private static string clientConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
         private static string initMenuPath = clientConsolePath + "\\Menus\\InitMenu.txt";
         private static string sessionMenuPath = clientConsolePath + "\\Menus\\sessionMenu.txt";
@@ -68,10 +67,7 @@ namespace ClientConsole
                             }
                             break;
                         case 2:
-                            //server.Disconnect();
-                            //client.Disconnect();
-                            Console.WriteLine("\nCerrando la conexión...");
-                            Console.WriteLine("Conexión cerrada.\n\n");
+                            client.Disconnect();
                             getOutOfSessionMenu = true;
                             break;
                     }
