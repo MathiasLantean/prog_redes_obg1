@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientLogic", "ClientLogic\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerLogic", "ServerLogic\ServerLogic.csproj", "{3CAB065F-720C-4E60-941C-C146AEFC7C9C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{26E1821F-C4BE-4EC1-B82E-DD6AD314D663}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{3CAB065F-720C-4E60-941C-C146AEFC7C9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3CAB065F-720C-4E60-941C-C146AEFC7C9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CAB065F-720C-4E60-941C-C146AEFC7C9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26E1821F-C4BE-4EC1-B82E-DD6AD314D663}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26E1821F-C4BE-4EC1-B82E-DD6AD314D663}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26E1821F-C4BE-4EC1-B82E-DD6AD314D663}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26E1821F-C4BE-4EC1-B82E-DD6AD314D663}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
