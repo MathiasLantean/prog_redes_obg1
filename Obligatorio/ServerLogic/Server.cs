@@ -35,7 +35,13 @@ namespace ServerLogic
         public bool LoginAdmin(string username, string pass)
         {
             User user = new User() { Username = username, Password = pass };
-            return admins.Contains(new Admin() { User = user});
+            Admin adminLog = new Admin() { User = user };
+            if (admins.Contains(adminLog))
+            {
+                Admin currentAdmin = admins.Find(x => x.Equals(adminLog));
+                return currentAdmin.User.Password == pass;
+            }
+            return false;
         }
     }
 }
