@@ -6,12 +6,21 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
+using Domain;
 
 namespace ServerLogic
 {
     public class Server
     {
-        public static void Connect()
+        private List<Admin> admins;
+
+        public Server()
+        {
+            this.admins = new List<Admin>();
+            this.admins.Add(new Admin());
+        }
+
+        public void Start()
         {
             var tcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 6000);
             tcpListener.Start(100);
@@ -21,6 +30,12 @@ namespace ServerLogic
                 Console.WriteLine("SE CONECTO.");
                 var networkStream = tcpClient.GetStream();
             }
+        }
+
+        public bool LoginAdmin(string username, string pass)
+        {
+            User user = new User() { Username = username, Password = pass };
+            return admins.Contains(new Admin() { User = user});
         }
     }
 }

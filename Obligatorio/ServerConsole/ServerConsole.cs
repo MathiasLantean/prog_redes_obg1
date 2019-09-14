@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ServerLogic;
 
@@ -9,11 +10,35 @@ namespace ServerConsole
 {
     class ServerConsole
     {
-        Server server = new Server();
+        private static Server server = new Server();
+
         static void Main(string[] args)
         {
-            Server.Connect();
+            var serverThread = new Thread(startServer);
+            var adminThread = new Thread(mainManuAdmin);
+            adminThread.Start();
+            serverThread.Start();
+            adminThread.Join();
+            serverThread.Join();
+        }
 
+        private static void startServer()
+        {
+            server.Start();
+        }
+
+        private static void mainManuAdmin()
+        {
+            string username;
+            string pass;
+            do
+            {
+                Console.WriteLine("Username:");
+                username = Console.ReadLine();
+                Console.WriteLine("Password:");
+                pass = Console.ReadLine();
+            } while (!server.LoginAdmin(username, pass));
+            Console.WriteLine("Successful!");
         }
     }
 }
