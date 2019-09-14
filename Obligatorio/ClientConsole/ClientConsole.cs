@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +25,7 @@ namespace ClientConsole
                 showMenu(initMenuPath);
                 Console.ReadLine();
                 Console.WriteLine("Estableciendo conexión con el servidor...");
-                //server = client.Connect();
+                client.Connect();
                 Console.WriteLine("Conexión establecida.\n");
                 bool getOutOfSessionMenu = false;
                 while (!getOutOfSessionMenu) {
