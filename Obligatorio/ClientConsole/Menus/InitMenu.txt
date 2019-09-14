@@ -1,0 +1,3 @@
+--ESTABLECER UNA CONEXION CON EL SERVIDOR--
+
+Para establecer una conexion con el servidor presione ENTER.

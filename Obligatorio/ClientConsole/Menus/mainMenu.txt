@@ -1,0 +1,7 @@
+--MENU PRINCIPAL--
+
+Seleccione una opcion:
+	1) Consultar cursos disponibles.
+	2) Subir material a curso.
+	3) Consultar notas.
+	4) Cerrar sesion.
