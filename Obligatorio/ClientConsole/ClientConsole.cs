@@ -40,7 +40,7 @@ namespace ClientConsole
                                 string user = Console.ReadLine();
                                 Console.Write("Ingresar constraseña: ");
                                 string password = Console.ReadLine();
-                                connPass = true;//connPass = server.Login(user, password);
+                                connPass = client.Login(user, password);
                                 if (!connPass)
                                 {
                                     Console.WriteLine("Usuario o contraseña incorrectos, intente nuevamente.");

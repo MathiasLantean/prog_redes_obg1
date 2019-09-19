@@ -44,10 +44,21 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ContentFactory\ContentFactory.csproj">
+      <Project>{d5a0a174-fbe1-433a-94f9-85d644ca866e}</Project>
+      <Name>ContentFactory</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Domain\Domain.csproj">
+      <Project>{26e1821f-c4be-4ec1-b82e-dd6ad314d663}</Project>
+      <Name>Domain</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ServerLogic\ServerLogic.csproj">
       <Project>{3cab065f-720c-4e60-941c-c146aefc7c9c}</Project>
       <Name>ServerLogic</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

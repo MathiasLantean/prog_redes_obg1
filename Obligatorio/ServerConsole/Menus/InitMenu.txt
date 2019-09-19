@@ -1,0 +1,3 @@
+--INICIAR SESION COMO ADMINISTRADOR--
+
+Para iniciar sesion como administrador presione ENTER.

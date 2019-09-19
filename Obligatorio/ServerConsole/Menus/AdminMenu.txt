@@ -1,0 +1,7 @@
+--MENU ADMINISTRADOR--
+
+Seleccione una opcion:
+	1) Registrar un nuevo estudiante.
+	2) .
+	3) .
+	4) Cerrar sesion.
