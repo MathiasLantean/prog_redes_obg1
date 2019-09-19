@@ -7,7 +7,8 @@ using System.Threading;
 using System.Net;
 using System.Net.Sockets;
 using Domain;
-using ContentFactory;
+using Action = RouteController.Action;
+using RouteController;
 
 namespace ClientLogic
 {
@@ -31,18 +32,42 @@ namespace ClientLogic
 
         public bool Login(string user, string password)
         {
-            //Content data = new JSon(Action.Login, ContetType.Lista, );
-            //string info = "{Username: " + user;
-            //data.Add();
-            //sendDataToServer(Content dataToSend, ContentType.Text);
-            return true;
+            var action = BitConverter.GetBytes((int)Action.Login);
+            stream.Write(action, 0, action.Length);
+            var typeContent = BitConverter.GetBytes((int)ContentType.Json);
+            stream.Write(typeContent, 0, typeContent.Length);
+            string json = "{ Username: " + user + ", Password: " + password + "}";
+            var mensajeInBytes = Encoding.UTF8.GetBytes(json);
+            var lengthOfData = mensajeInBytes.Length;
+            var lengthOfDataInBytes = BitConverter.GetBytes(lengthOfData);
+            stream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
+            stream.Write(mensajeInBytes, 0, mensajeInBytes.Length);
+
+            var response = new byte[4];
+            ReadDataFromStream(4, stream, response);
+            if(BitConverter.ToInt32(response, 0) == 1)
+            {
+                return true;
+            }else
+            {
+                return false;
+            }
+
         }
 
-        private void sendDataToServer(Content data, ContetType dataType)
+        private static void ReadDataFromStream(int length, NetworkStream networkStream, byte[] dataBytes)
         {
-            //stream.Write(data.LengthInBytes(dataType));
-            //stream.Write(data.DataInBytes(dataType));
-            throw new NotImplementedException();
+            var totalRecivedData = 0;
+            while (totalRecivedData < length)
+            {
+                var recived = networkStream.Read(dataBytes, totalRecivedData, length - totalRecivedData);
+                if (recived == 0)
+                {
+                    //ERROR
+                }
+                totalRecivedData = recived;
+            }
+            totalRecivedData = 0;
         }
     }
 }
