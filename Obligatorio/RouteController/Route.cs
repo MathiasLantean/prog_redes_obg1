@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using Domain;
 using System.Web.Script.Serialization;
+using System.Threading;
 
 namespace RouteController
 {
@@ -21,6 +22,7 @@ namespace RouteController
         };
         private List<Admin> admins;
         private List<Student> students;
+        static readonly object _locker = new object();
 
         public ActionDispatcher()
         {
@@ -66,10 +68,12 @@ namespace RouteController
         {
             User user = new User() { Username = username, Password = pass };
             Student studentLog = new Student() { User = user };
-            if (this.students.Contains(studentLog))
-            {
-                Student currentStudent = this.students.Find(x => x.Equals(studentLog));
-                return (currentStudent.User.Password == pass);
+            lock(_locker){
+                if (this.students.Contains(studentLog))
+                {
+                    Student currentStudent = this.students.Find(x => x.Equals(studentLog));
+                    return (currentStudent.User.Password == pass);
+                }
             }
             return false;
         }
@@ -78,17 +82,27 @@ namespace RouteController
         {
             User user = new User() { Username = username, Password = pass };
             Admin adminLog = new Admin() { User = user };
-            if (this.admins.Contains(adminLog))
+
+            lock (_locker)
             {
-                Admin currentAdmin = this.admins.Find(x => x.Equals(adminLog));
-                return (currentAdmin.User.Password == pass);
+                if (this.admins.Contains(adminLog))
+                {
+                    Admin currentAdmin = this.admins.Find(x => x.Equals(adminLog));
+                    return (currentAdmin.User.Password == pass);
+                }
+
             }
             return false;
         }
         public void addStudent(string studentUsername, string studentPass)
         {
             User studentUser = new User() { Username = studentUsername, Password = studentPass };
-            this.students.Add(new Student() { User = studentUser });
+
+            lock (_locker)
+            {
+                this.students.Add(new Student() { User = studentUser });
+                
+            }
         }
     }
 
