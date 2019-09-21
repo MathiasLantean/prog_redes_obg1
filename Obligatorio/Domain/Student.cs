@@ -10,5 +10,9 @@ namespace Domain
     {
         public User User { get; set; }
 
+        public override bool Equals(object obj)
+        {
+            return this.User.Equals(((Student)obj).User);
+        }
     }
 }

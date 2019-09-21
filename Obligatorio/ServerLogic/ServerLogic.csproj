@@ -44,9 +44,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.csproj">
-      <Project>{26e1821f-c4be-4ec1-b82e-dd6ad314d663}</Project>
-      <Name>Domain</Name>
+    <ProjectReference Include="..\RouteController\RouteController.csproj">
+      <Project>{d3cfc444-ea78-4c71-8928-fe3b8e97ff35}</Project>
+      <Name>RouteController</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
