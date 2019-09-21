@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using Domain;
 using Action = RouteController.Action;
 using RouteController;
+using System.Web.Script.Serialization;
 
 namespace ClientLogic
 {
@@ -33,26 +34,33 @@ namespace ClientLogic
         public bool Login(string user, string password)
         {
             var action = BitConverter.GetBytes((int)Action.Login);
-            stream.Write(action, 0, action.Length);
-            var typeContent = BitConverter.GetBytes((int)ContentType.Json);
-            stream.Write(typeContent, 0, typeContent.Length);
-            string json = "{ Username: " + user + ", Password: " + password + "}";
-            var mensajeInBytes = Encoding.UTF8.GetBytes(json);
-            var lengthOfData = mensajeInBytes.Length;
-            var lengthOfDataInBytes = BitConverter.GetBytes(lengthOfData);
-            stream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
-            stream.Write(mensajeInBytes, 0, mensajeInBytes.Length);
+            var payload = new Dictionary<string, string>(){
+                        { "Username", user },
+                        { "Password", password }
+                };
+            var jsonString = new JavaScriptSerializer().Serialize(payload);
+            var messageInBytes = Encoding.UTF8.GetBytes(jsonString);
+            var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
+            sendData(action, messageInBytes, lengthOfDataInBytes);
 
             var response = new byte[4];
             ReadDataFromStream(4, stream, response);
-            if(BitConverter.ToInt32(response, 0) == 1)
+            if (BitConverter.ToInt32(response, 0) == 1)
             {
                 return true;
-            }else
+            }
+            else
             {
                 return false;
             }
 
+        }
+
+        private void sendData(byte[] action, byte[] messageInBytes, byte[] lengthOfDataInBytes)
+        {
+            stream.Write(action, 0, action.Length);
+            stream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
+            stream.Write(messageInBytes, 0, messageInBytes.Length);
         }
 
         private static void ReadDataFromStream(int length, NetworkStream networkStream, byte[] dataBytes)

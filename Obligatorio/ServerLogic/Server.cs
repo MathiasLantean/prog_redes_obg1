@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
-using Domain;
 using Action = RouteController.Action;
 using RouteController;
 
@@ -14,15 +13,8 @@ namespace ServerLogic
 {
     public class Server
     {
-        private List<Admin> admins;
-        private List<Student> students;
 
-        public Server()
-        {
-            this.students = new List<Student>();
-            this.admins = new List<Admin>();
-            this.admins.Add(new Admin());
-        }
+        private ActionDispatcher route = new ActionDispatcher();
 
         public void Start()
         {
@@ -46,10 +38,6 @@ namespace ServerLogic
                 var actionInBytes = new byte[4];
                 ReadDataFromStream(4, networkStream, actionInBytes);
                 Action action = (Action)BitConverter.ToInt32(actionInBytes, 0);
-
-                var contentTypeInBytes = new byte[4];
-                ReadDataFromStream(4, networkStream, contentTypeInBytes);
-                ContentType contentType = (ContentType)BitConverter.ToInt32(contentTypeInBytes, 0);
                 
                 var dataLengthInBytes = new byte[4];
                 ReadDataFromStream(4, networkStream, dataLengthInBytes);
@@ -59,8 +47,7 @@ namespace ServerLogic
                 ReadDataFromStream(dataLength, networkStream, dataBytes);
                 string data = Encoding.UTF8.GetString(dataBytes);
 
-                ActionDispatcher actionDisp = new ActionDispatcher(action, contentType, data);
-                actionDisp.dispatch(action);
+                route.dispatch(action, data, networkStream);
             }
         }
         private static void ReadDataFromStream(int length, NetworkStream networkStream, byte[] dataBytes)
@@ -79,20 +66,12 @@ namespace ServerLogic
         }
         public bool LoginAdmin(string username, string pass)
         {
-            User user = new User() { Username = username, Password = pass };
-            Admin adminLog = new Admin() { User = user };
-            if (this.admins.Contains(adminLog))
-            {
-                Admin currentAdmin = this.admins.Find(x => x.Equals(adminLog));
-                return currentAdmin.User.Password == pass;
-            }
-            return false;
+            return route.LoginAdmin(username, pass);
         }
 
         public void addStudent(string studentUsername, string studentPass)
         {
-            User studentUser = new User() { Username = studentUsername, Password = studentPass };
-            this.students.Add(new Student() { User = studentUser });
+            route.addStudent(studentUsername, studentPass);
         }
     }
 }
