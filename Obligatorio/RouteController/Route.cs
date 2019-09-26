@@ -12,21 +12,25 @@ using System.Threading;
 namespace RouteController
 {
     public enum Action {
-        Login
+        Login,
+        GetCourses
     }
 
     public class ActionDispatcher
     {
         private static Dictionary<Action, string> actionDispatcher = new Dictionary<Action, string>() {
-            {Action.Login, "Login"}
+            {Action.Login, "Login"},
+            {Action.GetCourses, "GetCourses"}
         };
         private List<Admin> admins;
         private List<Student> students;
+        private List<Course> courses;
         static readonly object _locker = new object();
 
         public ActionDispatcher()
         {
             this.students = new List<Student>();
+            this.courses = new List<Course>();
             this.admins = new List<Admin>();
             this.admins.Add(new Admin());
         }

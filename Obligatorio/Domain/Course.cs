@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 
 namespace Domain
 {
-    public class Admin
+    public class Course
     {
-        public User User = new User() { UserNumber = "111", Password = "admin" };
+        public string Name { get; set; }
+        public List<Student> Students = new List<Student>();
 
         public override bool Equals(object obj)
         {
-            return this.User.Equals(((Admin)obj).User);
+            return this.Name.Equals(((Course)obj).Name);
         }
     }
 }
