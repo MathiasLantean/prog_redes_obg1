@@ -91,10 +91,13 @@ namespace ServerConsole
                                         break;
                                     case 3:
                                         List<string> coursesToRemove = getCoursesListAtString();
-                                        Console.WriteLine();
-                                        Console.Write("Ingrese la posición del curso a borrar: ");
-                                        int removeCourse = selectMenuOption(1, coursesToRemove.Count);
-                                        server.removeCourse(removeCourse-1);
+                                        if (coursesToRemove.Count > 0)
+                                        {
+                                            Console.WriteLine();
+                                            Console.Write("Ingrese la posición del curso a borrar: ");
+                                            int removeCourse = selectMenuOption(1, coursesToRemove.Count);
+                                            server.removeCourse(removeCourse - 1);
+                                        }
                                         break;
                                     case 4:
                                         getOutOfCoursesMenu = true;
