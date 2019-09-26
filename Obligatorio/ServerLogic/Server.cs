@@ -73,5 +73,20 @@ namespace ServerLogic
         {
             route.addStudent(studentUsername, studentPass);
         }
+
+        public List<string> getCousesAtString()
+        {
+            return route.getCousesAtString();
+        }
+
+        public void addCourse(string newCourse)
+        {
+            route.addCourse(newCourse);
+        }
+
+        public void removeCourse(int removeCourse)
+        {
+            route.removeCourse(removeCourse);
+        }
     }
 }

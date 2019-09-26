@@ -15,5 +15,10 @@ namespace Domain
         {
             return this.Name.Equals(((Course)obj).Name);
         }
+        public override string ToString()
+        {
+            return this.Name;
+        }
+
     }
 }

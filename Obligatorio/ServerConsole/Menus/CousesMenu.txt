@@ -1,0 +1,7 @@
+--MENU DE CURSOS--
+
+Seleccione una opcion:
+	1) Ver lista de cursos disponibles.
+	2) Dar de alta un curso.
+	3) Dar de baja un curso.
+	4) Cerrar sesion.

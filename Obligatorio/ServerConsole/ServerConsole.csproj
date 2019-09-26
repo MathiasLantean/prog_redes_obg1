@@ -56,6 +56,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Menus\CousesMenu.txt" />
     <Content Include="Menus\AdminMenu.txt" />
     <Content Include="Menus\InitMenu.txt" />
   </ItemGroup>

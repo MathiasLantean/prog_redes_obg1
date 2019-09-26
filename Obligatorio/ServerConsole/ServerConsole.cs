@@ -15,6 +15,7 @@ namespace ServerConsole
         private static string adminConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
         private static string adminMenu = adminConsolePath + "\\Menus\\adminMenu.txt";
         private static string initMenuPath = adminConsolePath + "\\Menus\\InitMenu.txt";
+        private static string cousesMenuPath = adminConsolePath + "\\Menus\\CousesMenu.txt";
 
         static void Main(string[] args)
         {
@@ -68,17 +69,58 @@ namespace ServerConsole
                             server.addStudent(studentUsername, studentPass);
                             break;
                         case 2:
+                            bool getOutOfCoursesMenu = false;
+                            while (!getOutOfCoursesMenu)
+                            {
+                                showMenu(cousesMenuPath);
+                                int cousesMenuOption = selectMenuOption(1, 4);
+                                switch (cousesMenuOption)
+                                {
+                                    case 1:
+                                        getCoursesListAtString();
+                                        Console.WriteLine();
+                                        Console.WriteLine("Presione ENTER para continuar.");
+                                        Console.ReadLine();
+                                        break;
+                                    case 2:
+                                        getCoursesListAtString();
+                                        Console.WriteLine();
+                                        Console.Write("Ingrese el nombre del nuevo curso: ");
+                                        string newCourse = Console.ReadLine();
+                                        server.addCourse(newCourse);
+                                        break;
+                                    case 3:
+                                        List<string> coursesToRemove = getCoursesListAtString();
+                                        Console.WriteLine();
+                                        Console.Write("Ingrese la posición del curso a borrar: ");
+                                        int removeCourse = selectMenuOption(1, coursesToRemove.Count);
+                                        server.removeCourse(removeCourse-1);
+                                        break;
+                                    case 4:
+                                        getOutOfCoursesMenu = true;
+                                        break;
+                                }
+                                
+                            }
                             break;
                         case 3:
                             break;
                         case 4:
-                            Console.WriteLine("\nCerrando sesión...");
-                            Console.WriteLine("Sesión cerrada.\n");
                             getOutOfAdminMenu = true;
                             break;
                     }
                 }
             }
+        }
+
+        private static List<string> getCoursesListAtString()
+        {
+            List<string> courses = server.getCousesAtString();
+            for (int i = 0; i < courses.Count; i++)
+            {
+                Console.WriteLine((i + 1) + ") " + courses[i].ToString());
+            }
+            return courses;
         }
 
         private static int selectMenuOption(int minOption, int maxOption)

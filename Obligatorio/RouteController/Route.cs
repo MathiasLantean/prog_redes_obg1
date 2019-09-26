@@ -26,6 +26,7 @@ namespace RouteController
         private List<Student> students;
         private List<Course> courses;
         static readonly object _locker = new object();
+        static readonly object _lockerCourse = new object();
 
         public ActionDispatcher()
         {
@@ -80,6 +81,34 @@ namespace RouteController
                 }
             }
             return false;
+        }
+
+        public void addCourse(string newCourse)
+        {
+            Course course = new Course() { Name = newCourse };
+
+            lock (_lockerCourse)
+            {
+                this.courses.Add(course);
+            }
+        }
+
+        public void removeCourse(int removeCourse)
+        {
+            lock (_lockerCourse)
+            {
+                this.courses.RemoveAt(removeCourse);
+            }
+        }
+
+        public List<string> getCousesAtString()
+        {
+            List<string> coursesAtString = new List<string>();
+            foreach(Course course in courses)
+            {
+                coursesAtString.Add(course.ToString());
+            }
+            return coursesAtString;
         }
 
         public bool LoginAdmin(string username, string pass)
