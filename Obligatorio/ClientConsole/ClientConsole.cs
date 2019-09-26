@@ -36,7 +36,7 @@ namespace ClientConsole
                             bool connPass = false;
                             while (!connPass)
                             {
-                                Console.Write("Ingresar nombre usuario: ");
+                                Console.Write("Ingresar número de usuario: ");
                                 string user = Console.ReadLine();
                                 Console.Write("Ingresar constraseña: ");
                                 string password = Console.ReadLine();

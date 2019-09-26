@@ -8,12 +8,12 @@ namespace Domain
 {
     public class User
     {
-        public string Username { get; set; }
+        public string UserNumber { get; set; }
         public string Password { get; set; }
 
         public override bool Equals(object obj)
         {
-            return this.Username.Equals(((User)obj).Username);
+            return this.UserNumber.Equals(((User)obj).UserNumber);
         }
 
     }

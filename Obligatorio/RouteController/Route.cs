@@ -66,7 +66,7 @@ namespace RouteController
 
         public bool LoginUser(string username, string pass)
         {
-            User user = new User() { Username = username, Password = pass };
+            User user = new User() { UserNumber = username, Password = pass };
             Student studentLog = new Student() { User = user };
             lock(_locker){
                 if (this.students.Contains(studentLog))
@@ -80,7 +80,7 @@ namespace RouteController
 
         public bool LoginAdmin(string username, string pass)
         {
-            User user = new User() { Username = username, Password = pass };
+            User user = new User() { UserNumber = username, Password = pass };
             Admin adminLog = new Admin() { User = user };
 
             lock (_locker)
@@ -96,7 +96,7 @@ namespace RouteController
         }
         public void addStudent(string studentUsername, string studentPass)
         {
-            User studentUser = new User() { Username = studentUsername, Password = studentPass };
+            User studentUser = new User() { UserNumber = studentUsername, Password = studentPass };
 
             lock (_locker)
             {

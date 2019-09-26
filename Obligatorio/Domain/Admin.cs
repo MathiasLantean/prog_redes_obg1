@@ -8,7 +8,7 @@ namespace Domain
 {
     public class Admin
     {
-        public User User = new User() { Username = "admin", Password = "admin" };
+        public User User = new User() { UserNumber = "admin", Password = "admin" };
 
         public override bool Equals(object obj)
         {
