@@ -14,8 +14,11 @@ namespace RouteController
     public enum Action {
         Login,
         GetCourses,
+        GetNotSuscribedCourses,
         Response,
-        Suscribe
+        Suscribe,
+        GetSuscribedCourses,
+        Unsuscribe
     }
 
     public class ActionDispatcher
@@ -23,11 +26,15 @@ namespace RouteController
         private static Dictionary<Action, string> actionDispatcher = new Dictionary<Action, string>() {
             {Action.Login, "Login"},
             {Action.GetCourses, "GetCourses"},
-            {Action.Suscribe, "Suscribe"}
+            {Action.GetNotSuscribedCourses, "GetNotSuscribedCourses"},
+            {Action.GetSuscribedCourses, "GetSuscribedCourses"},
+            {Action.Suscribe, "Suscribe"},
+            {Action.Unsuscribe, "Unsuscribe"}
         };
         private List<Admin> admins;
         private List<Student> students;
         private List<Course> courses;
+        private int lastStudentRegistered = 200000;
         static readonly object _locker = new object();
         static readonly object _lockerCourse = new object();
 
@@ -36,7 +43,7 @@ namespace RouteController
             this.students = new List<Student>();
             this.courses = new List<Course>();
             this.admins = new List<Admin>();
-            this.admins.Add(new Admin());
+            this.admins.Add(new Admin()); 
         }
 
         public void dispatch(Action action, string data, NetworkStream networkStream)
@@ -56,10 +63,14 @@ namespace RouteController
 
         }
 
-        public bool LoginUser(string username, string pass)
+        public bool LoginUser(int studentNumber, string pass)
         {
-            User user = new User() { UserNumber = username, Password = pass };
-            Student studentLog = new Student() { User = user };
+            User user;
+            Student studentLog;
+            
+            user = new User() { Password = pass };
+            studentLog = new Student() { User = user, Number = studentNumber };
+
             lock(_locker){
                 if (this.students.Contains(studentLog))
                 {
@@ -100,7 +111,7 @@ namespace RouteController
 
         public bool LoginAdmin(string username, string pass)
         {
-            User user = new User() { UserNumber = username, Password = pass };
+            User user = new User() { Email = username, Password = pass };
             Admin adminLog = new Admin() { User = user };
 
             lock (_locker)
@@ -117,12 +128,11 @@ namespace RouteController
 
         public void addStudent(string studentUsername, string studentPass)
         {
-            User studentUser = new User() { UserNumber = studentUsername, Password = studentPass };
+            User studentUser = new User() { Email = studentUsername, Password = studentPass };
 
             lock (_locker)
             {
-                this.students.Add(new Student() { User = studentUser });
-                
+                this.students.Add(new Student() { User = studentUser, Number = this.lastStudentRegistered++ });
             }
         }
 
@@ -140,9 +150,21 @@ namespace RouteController
         public void Login(string data, NetworkStream networkStream)
         {
             var dataArray = data.Split('&');
-            if (LoginUser(dataArray[0], dataArray[1]))
+            int studentNumber;
+            string studentPw = dataArray[1];
+            try
             {
-                sendData(Action.Response, "T&" + dataArray[0], networkStream);
+                studentNumber = Int32.Parse(dataArray[0]);
+            }
+            catch
+            {
+                string studentEmail = dataArray[0];
+                studentNumber = GetStudentNumberByEmail(studentEmail);
+            }
+
+            if (LoginUser(studentNumber, studentPw))
+            {
+                sendData(Action.Response, "T&" + studentNumber, networkStream);
             }
             else
             {
@@ -151,18 +173,63 @@ namespace RouteController
 
         }
 
+        private int GetStudentNumberByEmail(string studentEmail)
+        {
+            try
+            {
+                return this.students.Find(x => x.User.Email.Equals(studentEmail)).Number;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         public void Suscribe(string data, NetworkStream networkStream)
         {
             var dataArray = data.Split('&');
             Course course = this.courses.Find(x => x.Name.Equals(dataArray[0]));
-            Student student = this.students.Find(x => x.User.UserNumber.Equals(dataArray[1]));
-            course.Students.Add(student);
+            Student student = new Student() { Number = Int32.Parse(dataArray[1]) };
+            if (!course.Students.Select(x=>x.Item1).Contains(student))
+            {
+                Student studentSub = this.students.Find(x => x.Equals(student));
+                course.Students.Add(new Tuple<Student, int>(studentSub, 0));
+            }
+        }
+
+        public void Unsuscribe(string data, NetworkStream networkStream)
+        {
+            var dataArray = data.Split('&');
+            Course course = this.courses.Find(x => x.Name.Equals(dataArray[0]));
+            Student student = new Student() { Number = Int32.Parse(dataArray[1]) };
+            if (course.Students.Select(x => x.Item1).Contains(student))
+            {
+                Student studentUnsub = this.students.Find(x => x.Equals(student));
+                course.Students.Remove(course.Students.Find(x => x.Item1.Equals(studentUnsub)));
+            }
         }
 
         public void GetCourses(string data, NetworkStream networkStream) {
-            string coursesString = string.Join(",", this.courses.Select(x=>x.ToString()));
+            int studentNumber = Int32.Parse(data);
+            Student student = this.students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", this.courses.Select(x=>x.GetList(student)));
             sendData(Action.Response, coursesString, networkStream);
-            
+        }
+
+        public void GetNotSuscribedCourses(string data, NetworkStream networkStream)
+        {
+            int studentNumber = Int32.Parse(data);
+            Student student = this.students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", this.courses.Where(x => !x.Students.Select(y=>y.Item1).Contains(student)).Select(x=>x.ToString()));
+            sendData(Action.Response, coursesString, networkStream);
+        }
+
+        public void GetSuscribedCourses(string data, NetworkStream networkStream)
+        {
+            int studentNumber = Int32.Parse(data);
+            Student student = this.students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", this.courses.Where(x => x.Students.Select(y => y.Item1).Contains(student)).Select(x => x.ToString()));
+            sendData(Action.Response, coursesString, networkStream);
         }
     }
 

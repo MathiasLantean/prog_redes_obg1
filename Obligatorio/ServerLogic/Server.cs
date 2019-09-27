@@ -30,7 +30,11 @@ namespace ServerLogic
 
         private void actionDespatcher(TcpClient tcpClient)
         {
-            Console.WriteLine("SE CONECTO.");
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("SE CONECTÓ UN USUARIO.");
+            Console.ResetColor();
+
             var networkStream = tcpClient.GetStream();
 
             while (true)

@@ -40,9 +40,9 @@ namespace ClientLogic
 
         }
 
-        public string GetCourses()
+        public string GetCourses(int studentNumber)
         {
-            sendData(Action.GetCourses, "", this.stream);
+            sendData(Action.GetCourses, studentNumber.ToString(), this.stream);
             return reciveData();
         }
 
@@ -87,6 +87,23 @@ namespace ClientLogic
                 totalRecivedData = recived;
             }
             totalRecivedData = 0;
+        }
+
+        public string GetNotSuscribedCourses(int studentNumber)
+        {
+            sendData(Action.GetNotSuscribedCourses, studentNumber.ToString(), this.stream);
+            return reciveData();
+        }
+
+        public string GetSuscribedCourses(int studentNumber)
+        {
+            sendData(Action.GetSuscribedCourses, studentNumber.ToString(), this.stream);
+            return reciveData();
+        }
+
+        public void Unsuscribe(string cursonumeroestudiante)
+        {
+            sendData(Action.Unsuscribe, cursonumeroestudiante, stream);
         }
     }
 }

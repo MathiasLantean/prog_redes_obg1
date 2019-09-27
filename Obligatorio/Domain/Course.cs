@@ -9,7 +9,8 @@ namespace Domain
     public class Course
     {
         public string Name { get; set; }
-        public List<Student> Students = new List<Student>();
+        public List<Tuple<Student, int>> Students = new List<Tuple<Student, int>>();
+        public List<Tuple<Task, int>> Tasks = new List<Tuple<Task, int>>();
 
         public override bool Equals(object obj)
         {
@@ -20,5 +21,16 @@ namespace Domain
             return this.Name;
         }
 
+        public string GetList(Student student)
+        {
+
+            if (Students.Select(x=>x.Item1).Contains(student))
+            {
+                return this.Name + " | Inscripto | Calificación: " + Students.Find(x => x.Item1.Equals(student)).Item2;
+            }else
+            {
+                return this.Name;
+            }
+        }
     }
 }

@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace Domain
 {
-    public class User
+    public class Task
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public Student Student { get; set; }
+        public string PathTask { get; set; }
 
         public override bool Equals(object obj)
         {
-            return this.Email.Equals(((User)obj).Email);
+            return this.PathTask.Equals(((Task)obj).PathTask) && this.Student.Equals(((Task)obj).Student);
         }
-
     }
 }

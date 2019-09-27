@@ -2,6 +2,8 @@
 
 Seleccione una opcion:
 	1) Consultar cursos disponibles.
-	2) Subir material a curso.
-	3) Consultar notas.
-	4) Cerrar sesion.
+	2) Inscribirse a un curso.
+	3) Darse de baja de un curso.
+	4) Subir material a curso.
+	5) Consultar notas.
+	6) Cerrar sesion.
