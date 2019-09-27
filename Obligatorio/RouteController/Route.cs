@@ -13,7 +13,8 @@ namespace RouteController
 {
     public enum Action {
         Login,
-        GetCourses
+        GetCourses,
+        Response
     }
 
     public class ActionDispatcher
@@ -50,22 +51,6 @@ namespace RouteController
                 throw new Exception("Action not defined.");
             }
 
-
-        }
-
-        public void Login(string data, NetworkStream networkStream)
-        {
-            Dictionary<string, string> dataDictionary = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(data);
-            if(LoginUser(dataDictionary["Username"], dataDictionary["Password"]))
-            {
-                var response = BitConverter.GetBytes(1);
-                networkStream.Write(response, 0, response.Length);
-            }
-            else
-            {
-                var response = BitConverter.GetBytes(0);
-                networkStream.Write(response, 0, response.Length);
-            }
 
         }
 
@@ -127,6 +112,7 @@ namespace RouteController
             }
             return false;
         }
+
         public void addStudent(string studentUsername, string studentPass)
         {
             User studentUser = new User() { UserNumber = studentUsername, Password = studentPass };
@@ -136,6 +122,39 @@ namespace RouteController
                 this.students.Add(new Student() { User = studentUser });
                 
             }
+        }
+
+        private void sendData(Action action, string payload, NetworkStream networkStream)
+        {
+            var actionInBit = BitConverter.GetBytes((int)action);
+            var messageInBytes = Encoding.UTF8.GetBytes(payload);
+            var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
+
+            networkStream.Write(actionInBit, 0, actionInBit.Length);
+            networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
+            networkStream.Write(messageInBytes, 0, messageInBytes.Length);
+        }
+
+        public void Login(string data, NetworkStream networkStream)
+        {
+            Dictionary<string, string> dataDictionary = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(data);
+            if (LoginUser(dataDictionary["Username"], dataDictionary["Password"]))
+            {
+                var response = BitConverter.GetBytes(1);
+                networkStream.Write(response, 0, response.Length);
+            }
+            else
+            {
+                var response = BitConverter.GetBytes(0);
+                networkStream.Write(response, 0, response.Length);
+            }
+
+        }
+
+        public void GetCourses(string data, NetworkStream networkStream) {
+            string coursesString = string.Join(",", this.courses.Select(x=>x.ToString()));
+            sendData(Action.Response, coursesString, networkStream);
+            
         }
     }
 

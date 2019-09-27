@@ -53,6 +53,10 @@ namespace ClientConsole
                                 switch (mainMenuOption)
                                 {
                                     case 1:
+                                        var listCourses = client.GetCourses();
+                                        showCourses(listCourses);
+                                        Console.WriteLine("Presione ENTER para continuar");
+                                        Console.ReadLine();
                                         break;
                                     case 2:
                                         break;
@@ -75,6 +79,14 @@ namespace ClientConsole
             }
         }
 
+        private static void showCourses(string listCourses)
+        {
+            var courses = listCourses.Split(',');
+            for(int i = 0; i < courses.Length; i++)
+            {
+                Console.WriteLine(i+") " + courses[i]);
+            }
+        }
 
         private static int selectMenuOption(int minOption, int maxOption)
         {

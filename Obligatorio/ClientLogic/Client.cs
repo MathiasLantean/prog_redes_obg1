@@ -33,15 +33,11 @@ namespace ClientLogic
 
         public bool Login(string user, string password)
         {
-            var action = BitConverter.GetBytes((int)Action.Login);
             var payload = new Dictionary<string, string>(){
                         { "Username", user },
                         { "Password", password }
                 };
-            var jsonString = new JavaScriptSerializer().Serialize(payload);
-            var messageInBytes = Encoding.UTF8.GetBytes(jsonString);
-            var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
-            sendData(action, messageInBytes, lengthOfDataInBytes);
+            sendData(Action.Login, payload, this.stream);
 
             var response = new byte[4];
             ReadDataFromStream(4, stream, response);
@@ -56,11 +52,28 @@ namespace ClientLogic
 
         }
 
-        private void sendData(byte[] action, byte[] messageInBytes, byte[] lengthOfDataInBytes)
+        private void sendData(Action action, Dictionary<string, string> payload, NetworkStream networkStream)
         {
-            stream.Write(action, 0, action.Length);
-            stream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
-            stream.Write(messageInBytes, 0, messageInBytes.Length);
+            var actionInBit = BitConverter.GetBytes((int)action);
+            var jsonString = new JavaScriptSerializer().Serialize(payload);
+            var messageInBytes = Encoding.UTF8.GetBytes(jsonString);
+            var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
+
+            networkStream.Write(actionInBit, 0, actionInBit.Length);
+            networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
+            networkStream.Write(messageInBytes, 0, messageInBytes.Length);
+        }
+
+        private string reciveData()
+        {
+            var action = new byte[4];
+            ReadDataFromStream(4, stream, action);
+            var responseLength = new byte[4];
+            ReadDataFromStream(4, stream, responseLength);
+            var responseInBytes = new byte[BitConverter.ToInt32(responseLength, 0)];
+            ReadDataFromStream(responseInBytes.Length, stream, responseInBytes);
+            string data = Encoding.UTF8.GetString(responseInBytes);
+            return data;
         }
 
         private static void ReadDataFromStream(int length, NetworkStream networkStream, byte[] dataBytes)
@@ -76,6 +89,12 @@ namespace ClientLogic
                 totalRecivedData = recived;
             }
             totalRecivedData = 0;
+        }
+
+        public string GetCourses()
+        {
+            sendData(Action.GetCourses, new Dictionary<string, string> { }, this.stream);
+            return reciveData();
         }
     }
 }
