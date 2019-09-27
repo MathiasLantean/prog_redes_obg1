@@ -31,32 +31,30 @@ namespace ClientLogic
             this.tcpClient.Close();
         }
 
-        public bool Login(string user, string password)
+        public string Login(string user, string password)
         {
-            var payload = new Dictionary<string, string>(){
-                        { "Username", user },
-                        { "Password", password }
-                };
+            var payload = user + "&" + password;
             sendData(Action.Login, payload, this.stream);
 
-            var response = new byte[4];
-            ReadDataFromStream(4, stream, response);
-            if (BitConverter.ToInt32(response, 0) == 1)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return reciveData();
 
         }
 
-        private void sendData(Action action, Dictionary<string, string> payload, NetworkStream networkStream)
+        public string GetCourses()
+        {
+            sendData(Action.GetCourses, "", this.stream);
+            return reciveData();
+        }
+
+        public void Suscribe(string cursonumeroestudiante)
+        {
+            sendData(Action.Suscribe, cursonumeroestudiante, stream);
+        }
+
+        private void sendData(Action action, string payload, NetworkStream networkStream)
         {
             var actionInBit = BitConverter.GetBytes((int)action);
-            var jsonString = new JavaScriptSerializer().Serialize(payload);
-            var messageInBytes = Encoding.UTF8.GetBytes(jsonString);
+            var messageInBytes = Encoding.UTF8.GetBytes(payload);
             var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
 
             networkStream.Write(actionInBit, 0, actionInBit.Length);
@@ -89,12 +87,6 @@ namespace ClientLogic
                 totalRecivedData = recived;
             }
             totalRecivedData = 0;
-        }
-
-        public string GetCourses()
-        {
-            sendData(Action.GetCourses, new Dictionary<string, string> { }, this.stream);
-            return reciveData();
         }
     }
 }

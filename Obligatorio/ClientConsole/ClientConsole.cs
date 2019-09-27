@@ -16,6 +16,7 @@ namespace ClientConsole
         private static string initMenuPath = clientConsolePath + "\\Menus\\InitMenu.txt";
         private static string sessionMenuPath = clientConsolePath + "\\Menus\\sessionMenu.txt";
         private static string mainMenuPath = clientConsolePath + "\\Menus\\mainMenu.txt";
+        private static string studentLogged = "";
 
         static void Main(string[] args)
         {
@@ -40,7 +41,12 @@ namespace ClientConsole
                                 string user = Console.ReadLine();
                                 Console.Write("Ingresar constraseña: ");
                                 string password = Console.ReadLine();
-                                connPass = client.Login(user, password);
+                                var loginResponse = client.Login(user, password);
+                                if(loginResponse.Split('&')[0] == "T")
+                                {
+                                    connPass = true;
+                                    studentLogged = loginResponse;
+                                }
                                 if (!connPass)
                                 {
                                     Console.WriteLine("Usuario o contraseña incorrectos, intente nuevamente.");
@@ -53,12 +59,16 @@ namespace ClientConsole
                                 switch (mainMenuOption)
                                 {
                                     case 1:
-                                        var listCourses = client.GetCourses();
-                                        showCourses(listCourses);
+                                        showCourses(client.GetCourses());
                                         Console.WriteLine("Presione ENTER para continuar");
                                         Console.ReadLine();
                                         break;
                                     case 2:
+                                        var courses = client.GetCourses();
+                                        showCourses(courses);
+                                        Console.WriteLine("Seleccione el curso al cual desea inscribirse.");
+                                        int selectedCourse = selectMenuOption(1, courses.Split(',').Length);
+                                        client.Suscribe(courses.Split(',')[selectedCourse-1]+"&"+studentLogged.Split('&')[1]);
                                         break;
                                     case 3:
                                         break;
@@ -84,7 +94,7 @@ namespace ClientConsole
             var courses = listCourses.Split(',');
             for(int i = 0; i < courses.Length; i++)
             {
-                Console.WriteLine(i+") " + courses[i]);
+                Console.WriteLine((i+1)+") " + courses[i]);
             }
         }
 

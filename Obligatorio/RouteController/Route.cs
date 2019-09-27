@@ -14,14 +14,16 @@ namespace RouteController
     public enum Action {
         Login,
         GetCourses,
-        Response
+        Response,
+        Suscribe
     }
 
     public class ActionDispatcher
     {
         private static Dictionary<Action, string> actionDispatcher = new Dictionary<Action, string>() {
             {Action.Login, "Login"},
-            {Action.GetCourses, "GetCourses"}
+            {Action.GetCourses, "GetCourses"},
+            {Action.Suscribe, "Suscribe"}
         };
         private List<Admin> admins;
         private List<Student> students;
@@ -137,18 +139,24 @@ namespace RouteController
 
         public void Login(string data, NetworkStream networkStream)
         {
-            Dictionary<string, string> dataDictionary = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(data);
-            if (LoginUser(dataDictionary["Username"], dataDictionary["Password"]))
+            var dataArray = data.Split('&');
+            if (LoginUser(dataArray[0], dataArray[1]))
             {
-                var response = BitConverter.GetBytes(1);
-                networkStream.Write(response, 0, response.Length);
+                sendData(Action.Response, "T&" + dataArray[0], networkStream);
             }
             else
             {
-                var response = BitConverter.GetBytes(0);
-                networkStream.Write(response, 0, response.Length);
+                sendData(Action.Response, "F", networkStream);
             }
 
+        }
+
+        public void Suscribe(string data, NetworkStream networkStream)
+        {
+            var dataArray = data.Split('&');
+            Course course = this.courses.Find(x => x.Name.Equals(dataArray[0]));
+            Student student = this.students.Find(x => x.User.UserNumber.Equals(dataArray[1]));
+            course.Students.Add(student);
         }
 
         public void GetCourses(string data, NetworkStream networkStream) {
