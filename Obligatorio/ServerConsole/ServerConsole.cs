@@ -146,8 +146,8 @@ namespace ServerConsole
                                                     List<string> coursesWithTasks = getCoursesWithTasks();
                                                     if (coursesWithTasks.Count > 0)
                                                     {
-
-                                                    }else
+                                                    }
+                                                    else
                                                     {
                                                         Console.ForegroundColor = ConsoleColor.Red;
                                                         Console.WriteLine("No hay cursos con tareas asignadas.");
@@ -159,7 +159,6 @@ namespace ServerConsole
                                                     List<string> coursesToAddTask = getPosibleCoursesToAddTask();
                                                     if (coursesToAddTask.Count > 0)
                                                     {
-                                                        Console.WriteLine();
                                                         Console.WriteLine("Ingrese la posición del curso al que desea agregarle una tarea: ");
                                                         int courseToAddTask = selectMenuOption(1, coursesToAddTask.Count);
                                                         Console.WriteLine("Ingrese el nombre de la tarea: ");
@@ -168,7 +167,7 @@ namespace ServerConsole
                                                         int taskScore = 0;
                                                         while (!(taskScore > 0 && taskScore <= maxTaskScore))
                                                         {
-                                                            Console.WriteLine("Ingrese la calificación máxima de la tarea (0-" + maxTaskScore + "): ");
+                                                            Console.WriteLine("Ingrese la calificación máxima de la tarea (1-" + maxTaskScore + "): ");
                                                             try
                                                             {
                                                                 taskScore = Int32.Parse(Console.ReadLine());
