@@ -109,6 +109,47 @@ namespace RouteController
             return coursesAtString;
         }
 
+        public List<string> getCoursesWithTasks()
+        {
+            List<string> coursesWithTask = new List<string>();
+
+            foreach (Course course in courses)
+            {
+                if (course.Tasks.Count > 0)
+                {
+                    string courseWithTasks = course.ToString() + "&";
+                    foreach (Domain.Task task in course.Tasks)
+                    {
+                        courseWithTasks += task.ToString() + ",";
+                    }
+                    courseWithTasks = courseWithTasks.Remove(courseWithTasks.Count() - 1);
+                    coursesWithTask.Add(courseWithTasks);
+                }
+            }
+            return coursesWithTask;
+        }
+
+        public void AddTask(string courseName, string taskName, int taskScore)
+        {
+            Course course = this.courses.Find(x => x.Name.Equals(courseName));
+            Domain.Task taskToAdd = new Domain.Task() { TaskName = taskName, MaxScore = taskScore };
+            course.Tasks.Add(taskToAdd);
+            course.totalTaskScore = course.totalTaskScore + taskScore;
+        }
+
+        public List<string> getPosibleCoursesToAddTask()
+        {
+            List<string> coursesWithNote = new List<string>();
+            foreach (Course course in courses)
+            {
+                if(course.totalTaskScore < 100)
+                {
+                    coursesWithNote.Add(course.ToString() + "&" + (100 - course.totalTaskScore));
+                }
+            }
+            return coursesWithNote;
+        }
+
         public bool LoginAdmin(string username, string pass)
         {
             User user = new User() { Email = username, Password = pass };
@@ -126,14 +167,19 @@ namespace RouteController
             return false;
         }
 
-        public void addStudent(string studentUsername, string studentPass)
+        public bool addStudent(string studentUsername, string studentPass)
         {
             User studentUser = new User() { Email = studentUsername, Password = studentPass };
 
             lock (_locker)
             {
-                this.students.Add(new Student() { User = studentUser, Number = this.lastStudentRegistered++ });
+                if (!this.students.Contains(new Student() { User = studentUser }))
+                {
+                    this.students.Add(new Student() { User = studentUser, Number = this.lastStudentRegistered++ });
+                    return true;
+                }
             }
+            return false;
         }
 
         private void sendData(Action action, string payload, NetworkStream networkStream)

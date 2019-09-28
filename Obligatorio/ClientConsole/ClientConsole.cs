@@ -16,6 +16,7 @@ namespace ClientConsole
         private static string initMenuPath = clientConsolePath + "\\Menus\\InitMenu.txt";
         private static string sessionMenuPath = clientConsolePath + "\\Menus\\sessionMenu.txt";
         private static string mainMenuPath = clientConsolePath + "\\Menus\\mainMenu.txt";
+        private static string coursesMenuPath = clientConsolePath + "\\Menus\\coursesMenu.txt";
         private static int studentLogged;
 
         static void Main(string[] args)
@@ -57,60 +58,78 @@ namespace ClientConsole
                             bool getOutOfMainMenu = false;
                             while (!getOutOfMainMenu) {
                                 showMenu(mainMenuPath);
-                                int mainMenuOption = selectMenuOption(1, 6);
+                                int mainMenuOption = selectMenuOption(1, 3);
                                 switch (mainMenuOption)
                                 {
                                     case 1:
-                                        showCourses(client.GetCourses(studentLogged));
-                                        Console.ReadLine();
+                                        bool getOutOfCoursesMenu = false;
+                                        while (!getOutOfCoursesMenu)
+                                        {
+                                            showMenu(coursesMenuPath);
+                                            int coursesMenuOption = selectMenuOption(1, 5);
+                                            switch (coursesMenuOption)
+                                            {
+                                                case 1:
+                                                    showCourses(client.GetCourses(studentLogged));
+                                                    Console.ReadLine();
+                                                    break;
+                                                case 2:
+                                                    var notSuscribedCourses = client.GetNotSuscribedCourses(studentLogged);
+                                                    if (!notSuscribedCourses.Split(',')[0].Equals(""))
+                                                    {
+                                                        showCourses(notSuscribedCourses);
+                                                        Console.WriteLine("Seleccione el curso al cual desea inscribirse.");
+                                                        int selectedCourse = selectMenuOption(1, notSuscribedCourses.Split(',').Length);
+                                                        client.Suscribe(notSuscribedCourses.Split(',')[selectedCourse - 1] + "&" + studentLogged);
+                                                        Console.ForegroundColor = ConsoleColor.Green;
+                                                        Console.WriteLine("Te inscribiste al curso correctamente.");
+                                                        Console.ResetColor();
+                                                        Console.ReadLine();
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No tienes cursos disponibles para inscribirte.");
+                                                        Console.ResetColor();
+                                                        Console.ReadLine();
+                                                    }
+                                                    break;
+                                                case 3:
+                                                    var suscribedCourses = client.GetSuscribedCourses(studentLogged);
+                                                    if (!suscribedCourses.Split(',')[0].Equals(""))
+                                                    {
+                                                        showCourses(suscribedCourses);
+                                                        Console.WriteLine("Seleccione el curso del cual desea darse de baja.");
+                                                        int selectedCourse = selectMenuOption(1, suscribedCourses.Split(',').Length);
+                                                        client.Unsuscribe(suscribedCourses.Split(',')[selectedCourse - 1] + "&" + studentLogged);
+                                                        Console.ForegroundColor = ConsoleColor.Green;
+                                                        Console.WriteLine("Te diste de baja del curso correctamente.");
+                                                        Console.ResetColor();
+                                                        Console.ReadLine();
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No tienes cursos disponibles para darte de baja.");
+                                                        Console.ResetColor();
+                                                        Console.ReadLine();
+                                                    }
+                                                    break;
+                                                case 4:
+                                                    break;
+                                                case 5:
+                                                    getOutOfCoursesMenu = true;
+                                                    break;
+                                            }
+                                        }
                                         break;
                                     case 2:
-                                        var notSuscribedCourses = client.GetNotSuscribedCourses(studentLogged);
-                                        if (!notSuscribedCourses.Split(',')[0].Equals(""))
-                                        {
-                                            showCourses(notSuscribedCourses);
-                                            Console.WriteLine("Seleccione el curso al cual desea inscribirse.");
-                                            int selectedCourse = selectMenuOption(1, notSuscribedCourses.Split(',').Length);
-                                            client.Suscribe(notSuscribedCourses.Split(',')[selectedCourse - 1] + "&" + studentLogged);
-                                            Console.ForegroundColor = ConsoleColor.Green;
-                                            Console.WriteLine("Te inscribiste al curso correctamente.");
-                                            Console.ResetColor();
-                                            Console.ReadLine();
-                                        }
-                                        else
-                                        {
-                                            Console.ForegroundColor = ConsoleColor.Red;
-                                            Console.WriteLine("No tienes cursos disponibles para inscribirte.");
-                                            Console.ResetColor();
-                                            Console.ReadLine();
-                                        }
+                                        Console.ForegroundColor = ConsoleColor.Red;
+                                        Console.WriteLine("FALTA IMPLEMENTAR: CONSULTAR NOTAS");
+                                        Console.ResetColor();
+                                        Console.ReadLine();
                                         break;
                                     case 3:
-                                        var suscribedCourses = client.GetSuscribedCourses(studentLogged);
-                                        if (!suscribedCourses.Split(',')[0].Equals(""))
-                                        {
-                                            showCourses(suscribedCourses);
-                                            Console.WriteLine("Seleccione el curso del cual desea darse de baja.");
-                                            int selectedCourse = selectMenuOption(1, suscribedCourses.Split(',').Length);
-                                            client.Unsuscribe(suscribedCourses.Split(',')[selectedCourse - 1] + "&" + studentLogged);
-                                            Console.ForegroundColor = ConsoleColor.Green;
-                                            Console.WriteLine("Te diste de baja del curso correctamente.");
-                                            Console.ResetColor();
-                                            Console.ReadLine();
-                                        }
-                                        else
-                                        {
-                                            Console.ForegroundColor = ConsoleColor.Red;
-                                            Console.WriteLine("No tienes cursos disponibles para darte de baja.");
-                                            Console.ResetColor();
-                                            Console.ReadLine();
-                                        }
-                                        break;
-                                    case 4:
-                                        break;
-                                    case 5:
-                                        break;
-                                    case 6:
                                         Console.ForegroundColor = ConsoleColor.Red;
                                         Console.WriteLine("\nCerrando sesión...");
                                         Console.WriteLine("Sesión cerrada.\n");

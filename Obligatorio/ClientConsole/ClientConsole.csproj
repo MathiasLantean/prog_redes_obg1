@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Menus\InitMenu.txt" />
+    <Content Include="Menus\coursesMenu.txt" />
     <Content Include="Menus\mainMenu.txt" />
     <Content Include="Menus\sessionMenu.txt" />
   </ItemGroup>

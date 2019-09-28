@@ -3,5 +3,4 @@
 Seleccione una opcion:
 	1) Registrar un nuevo estudiante.
 	2) Gestion de cursos.
-	3) .
-	4) Cerrar sesion.
+	3) Cerrar sesion.
