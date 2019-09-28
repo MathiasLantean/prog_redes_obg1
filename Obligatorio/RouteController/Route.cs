@@ -327,6 +327,14 @@ namespace RouteController
             try
             {
                 File.WriteAllBytes(taskPath, fileTaskInBytes);
+                Course course = this.courses.Find(x => x.Name.Equals(courseName));
+                Student student = course.Students.Find(x => x.Item1.Number == studentNumber).Item1;
+                Domain.Task task = course.Tasks.Find(x => x.TaskName.Equals(taskName));
+                Tuple<string, int> pathScore = new Tuple<string, int>(taskPath, 0);
+                Tuple<Domain.Task, Tuple<string, int>> taskPathScore = new Tuple<Domain.Task, Tuple<string, int>>(task, pathScore);
+                Tuple<Student,Tuple<Domain.Task, Tuple<string, int>>> studentTaskPathScore = new Tuple<Student,Tuple<Domain.Task, Tuple<string, int>>>(student, taskPathScore);
+                course.StudentTasks.Add(studentTaskPathScore);
+
                 sendData(Action.Response, "T", networkStream);
             }
             catch
