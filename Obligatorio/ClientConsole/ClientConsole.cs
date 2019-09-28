@@ -70,52 +70,92 @@ namespace ClientConsole
                                             switch (coursesMenuOption)
                                             {
                                                 case 1:
-                                                    showCourses(client.GetCourses(studentLogged));
+                                                    var courses = client.GetCourses(studentLogged);
+                                                    if (!courses.Split(',')[0].Equals(""))
+                                                    {
+                                                        showList(courses);
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No tienes cursos disponibles para mostrar.");
+                                                        Console.ResetColor();
+                                                    }
                                                     Console.ReadLine();
                                                     break;
                                                 case 2:
                                                     var notSuscribedCourses = client.GetNotSuscribedCourses(studentLogged);
                                                     if (!notSuscribedCourses.Split(',')[0].Equals(""))
                                                     {
-                                                        showCourses(notSuscribedCourses);
+                                                        showList(notSuscribedCourses);
                                                         Console.WriteLine("Seleccione el curso al cual desea inscribirse.");
                                                         int selectedCourse = selectMenuOption(1, notSuscribedCourses.Split(',').Length);
                                                         client.Suscribe(notSuscribedCourses.Split(',')[selectedCourse - 1] + "&" + studentLogged);
                                                         Console.ForegroundColor = ConsoleColor.Green;
                                                         Console.WriteLine("Te inscribiste al curso correctamente.");
                                                         Console.ResetColor();
-                                                        Console.ReadLine();
                                                     }
                                                     else
                                                     {
                                                         Console.ForegroundColor = ConsoleColor.Red;
                                                         Console.WriteLine("No tienes cursos disponibles para inscribirte.");
                                                         Console.ResetColor();
-                                                        Console.ReadLine();
                                                     }
+                                                    Console.ReadLine();
                                                     break;
                                                 case 3:
                                                     var suscribedCourses = client.GetSuscribedCourses(studentLogged);
                                                     if (!suscribedCourses.Split(',')[0].Equals(""))
                                                     {
-                                                        showCourses(suscribedCourses);
+                                                        showList(suscribedCourses);
                                                         Console.WriteLine("Seleccione el curso del cual desea darse de baja.");
                                                         int selectedCourse = selectMenuOption(1, suscribedCourses.Split(',').Length);
                                                         client.Unsuscribe(suscribedCourses.Split(',')[selectedCourse - 1] + "&" + studentLogged);
                                                         Console.ForegroundColor = ConsoleColor.Green;
                                                         Console.WriteLine("Te diste de baja del curso correctamente.");
                                                         Console.ResetColor();
-                                                        Console.ReadLine();
                                                     }
                                                     else
                                                     {
                                                         Console.ForegroundColor = ConsoleColor.Red;
                                                         Console.WriteLine("No tienes cursos disponibles para darte de baja.");
                                                         Console.ResetColor();
-                                                        Console.ReadLine();
                                                     }
+                                                    Console.ReadLine();
                                                     break;
                                                 case 4:
+                                                    var suscribedCoursesWithTasks = client.GetSuscribedCoursesWithTasks(studentLogged);
+                                                    if (!suscribedCoursesWithTasks.Split(',')[0].Equals(""))
+                                                    {
+                                                        showList(suscribedCoursesWithTasks);
+                                                        Console.WriteLine("Seleccione el curso al cual desea subirle una tarea.");
+                                                        int selectedCourse = selectMenuOption(1, suscribedCoursesWithTasks.Split(',').Length);
+                                                        var courseTasks = client.GetCourseTasks(suscribedCoursesWithTasks.Split(',')[selectedCourse-1]);
+                                                        showList(courseTasks);
+                                                        Console.WriteLine("Seleccione la tarea que desea subir.");
+                                                        int selectedTask = selectMenuOption(1, courseTasks.Split(',').Length);
+                                                        Console.WriteLine("Ingrese la ubicación de la tarea.");
+                                                        string taskPath = Console.ReadLine();
+                                                        var taskUpdated = client.UpdateTaskToCourse(suscribedCoursesWithTasks.Split(',')[selectedCourse - 1], courseTasks.Split(',')[selectedTask-1], taskPath, studentLogged);
+                                                        if (taskUpdated.Equals("T"))
+                                                        {
+                                                            Console.ForegroundColor = ConsoleColor.Green;
+                                                            Console.WriteLine("Has subido la tarea correctamente.");
+                                                            Console.ResetColor();
+                                                        }else
+                                                        {
+                                                            Console.ForegroundColor = ConsoleColor.Red;
+                                                            Console.WriteLine("Ha ocurrido un error al subir la tarea, intente nuevamente.");
+                                                            Console.ResetColor();
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No tienes cursos con tareas disponibles.");
+                                                        Console.ResetColor();
+                                                    }
+                                                    Console.ReadLine();
                                                     break;
                                                 case 5:
                                                     getOutOfCoursesMenu = true;
@@ -149,9 +189,9 @@ namespace ClientConsole
             }
         }
 
-        private static void showCourses(string listCourses)
+        private static void showList(string list)
         {
-            var courses = listCourses.Split(',');
+            var courses = list.Split(',');
             for(int i = 0; i < courses.Length; i++)
             {
                 Console.WriteLine((i+1)+") " + courses[i]);

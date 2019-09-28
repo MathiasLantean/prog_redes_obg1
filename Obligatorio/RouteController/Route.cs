@@ -8,6 +8,7 @@ using System.Reflection;
 using Domain;
 using System.Web.Script.Serialization;
 using System.Threading;
+using System.IO;
 
 namespace RouteController
 {
@@ -18,7 +19,10 @@ namespace RouteController
         Response,
         Suscribe,
         GetSuscribedCourses,
-        Unsuscribe
+        Unsuscribe,
+        GetSuscribedCoursesWithTasks,
+        GetCourseTasks,
+        UpdateTaskToCourse
     }
 
     public class ActionDispatcher
@@ -28,8 +32,11 @@ namespace RouteController
             {Action.GetCourses, "GetCourses"},
             {Action.GetNotSuscribedCourses, "GetNotSuscribedCourses"},
             {Action.GetSuscribedCourses, "GetSuscribedCourses"},
+            {Action.GetSuscribedCoursesWithTasks, "GetSuscribedCoursesWithTasks"},
+            {Action.GetCourseTasks, "GetCourseTasks"},
             {Action.Suscribe, "Suscribe"},
-            {Action.Unsuscribe, "Unsuscribe"}
+            {Action.Unsuscribe, "Unsuscribe"},
+            {Action.UpdateTaskToCourse, "UpdateTaskToCourse"}
         };
         private List<Admin> admins;
         private List<Student> students;
@@ -276,6 +283,66 @@ namespace RouteController
             Student student = this.students.Find(x => x.Number == studentNumber);
             string coursesString = string.Join(",", this.courses.Where(x => x.Students.Select(y => y.Item1).Contains(student)).Select(x => x.ToString()));
             sendData(Action.Response, coursesString, networkStream);
+        }
+
+        public void GetSuscribedCoursesWithTasks(string data, NetworkStream networkStream)
+        {
+            int studentNumber = Int32.Parse(data);
+            Student student = this.students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", this.courses.Where(x => x.Students.Select(y => y.Item1).Contains(student) && x.Tasks.Count > 0).Select(x => x.ToString()));
+            sendData(Action.Response, coursesString, networkStream);
+        }
+
+        public void GetCourseTasks(string data, NetworkStream networkStream)
+        {
+            string courseName = data;
+            Course course = this.courses.Find(x => x.Name == courseName);
+            string tasksString = string.Join(",", course.Tasks.Select(x => x.ToString()));
+            sendData(Action.Response, tasksString, networkStream);
+        }
+        
+        public void UpdateTaskToCourse(string data, NetworkStream networkStream)
+        {
+            int totalToRemove = 0;
+            string courseName = data.Split('&')[0];
+            totalToRemove += courseName.Length + 1;
+            string taskName = data.Split('&')[1];
+            totalToRemove += taskName.Length + 1;
+            taskName = taskName.Split('[')[0];
+            taskName = taskName.Remove(taskName.Count() - 1);
+            int studentNumber = Int32.Parse(data.Split('&')[2]);
+            totalToRemove += data.Split('&')[2].Length + 1;
+            string extension = data.Split('&')[3];
+            totalToRemove += extension.Length + 1;
+            string fileTask = data.Remove(0, totalToRemove);
+            char[] fileTaskInChar = StringAChar(fileTask);
+            byte[] fileTaskInBytes = new byte[fileTaskInChar.Length];
+            for (int i = 0; i < fileTaskInChar.Length; i++)
+            {
+                fileTaskInBytes[i] = (byte)fileTaskInChar[i];
+            }
+
+            string taskPath = "./"+ courseName + "-" + studentNumber + "-" + taskName + "-" + extension;
+
+            try
+            {
+                File.WriteAllBytes(taskPath, fileTaskInBytes);
+                sendData(Action.Response, "T", networkStream);
+            }
+            catch
+            {
+                sendData(Action.Response, "F", networkStream);
+            }
+            
+        }
+        private char[] StringAChar(string str)
+        {
+            char[] result = new char[str.Length];
+            for (int i = 0; i < str.Length; i++)
+            {
+                result[i] = str[i];
+            }
+            return result;
         }
     }
 

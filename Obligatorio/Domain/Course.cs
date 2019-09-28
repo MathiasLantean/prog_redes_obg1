@@ -11,7 +11,7 @@ namespace Domain
         public string Name { get; set; }
         public List<Tuple<Student, int>> Students = new List<Tuple<Student, int>>();
         public List<Task> Tasks = new List<Task>();
-        public List<Tuple<Student,Tuple<Task,int>>> StudentTasks = new List<Tuple<Student, Tuple<Task, int>>>();
+        public List<Tuple<Student,Tuple<Task,Tuple<string, int>>>> StudentTasks = new List<Tuple<Student, Tuple<Task, Tuple<string, int>>>>();
         public int totalTaskScore = 0;
 
         public override bool Equals(object obj)

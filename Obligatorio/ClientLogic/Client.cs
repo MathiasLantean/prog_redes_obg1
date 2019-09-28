@@ -10,6 +10,7 @@ using Domain;
 using Action = RouteController.Action;
 using RouteController;
 using System.Web.Script.Serialization;
+using System.IO;
 
 namespace ClientLogic
 {
@@ -17,7 +18,6 @@ namespace ClientLogic
     {
         private NetworkStream stream;
         private TcpClient tcpClient;
-        private Student loggedStudent;
         public void Connect()
         {
             this.tcpClient = new TcpClient(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
@@ -104,6 +104,35 @@ namespace ClientLogic
         public void Unsuscribe(string cursonumeroestudiante)
         {
             sendData(Action.Unsuscribe, cursonumeroestudiante, stream);
+        }
+
+        public string GetSuscribedCoursesWithTasks(int studentNumber)
+        {
+            sendData(Action.GetSuscribedCoursesWithTasks, studentNumber.ToString(), this.stream);
+            return reciveData();
+        }
+
+        public string GetCourseTasks(string course)
+        {
+            sendData(Action.GetCourseTasks, course, this.stream);
+            return reciveData();
+        }
+
+        public string UpdateTaskToCourse(string courseName, string taskName, string taskPath, int studentNumber)
+        {
+            string extension = Path.GetExtension(taskPath);
+            string taskFile = ACharToString(File.ReadAllBytes(taskPath).Select(x=>(char)x).ToArray());
+            sendData(Action.UpdateTaskToCourse, courseName + "&" + taskName + "&" + studentNumber + "&"+ extension + "&" + taskFile, this.stream);
+            return reciveData();
+        }
+        private string ACharToString(char[] arrChar)
+        {
+            string result = "";
+            foreach (char character in arrChar)
+            {
+                result += character;
+            }
+            return result;
         }
     }
 }
