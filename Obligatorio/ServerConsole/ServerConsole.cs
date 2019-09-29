@@ -30,7 +30,16 @@ namespace ServerConsole
 
         private static void startServer()
         {
-            server.Start();
+            try
+            {   
+                server.Start();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+                Console.ResetColor();
+            }
         }
 
         private static void mainManuAdmin()

@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Net;
 using System.Net.Sockets;
-using Domain;
 using Action = RouteController.Action;
-using RouteController;
-using System.Web.Script.Serialization;
 using System.IO;
 
 namespace ClientLogic
@@ -20,9 +15,28 @@ namespace ClientLogic
         private TcpClient tcpClient;
         public void Connect()
         {
-            this.tcpClient = new TcpClient(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
-            tcpClient.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 6000));
-            this.stream = tcpClient.GetStream();
+            try
+            {
+                var appSettings = ConfigurationManager.AppSettings;
+                IPAddress serverIpAddress = IPAddress.Parse(appSettings["ServerIpAddress"]);
+                int serverPort = Int32.Parse(appSettings["ServerPort"]);
+                IPAddress clientIpAddress = IPAddress.Parse(appSettings["ClientIpAddress"]);
+                int clientPort = Int32.Parse(appSettings["ClientPort"]);
+
+                var tcpListener = new TcpListener(serverIpAddress, serverPort);
+
+                this.tcpClient = new TcpClient(new IPEndPoint(clientIpAddress, clientPort));
+                tcpClient.Connect(new IPEndPoint(serverIpAddress, serverPort));
+                this.stream = tcpClient.GetStream();
+            }
+            catch (ConfigurationErrorsException)
+            {
+                throw new Exception("Error leyendo app settings.");
+            }
+            catch (FormatException)
+            {
+                throw new Exception("Server IP o puerto invalido.");
+            }
         }
 
         public void Disconnect()

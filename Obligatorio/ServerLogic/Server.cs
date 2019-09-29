@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
@@ -18,13 +18,28 @@ namespace ServerLogic
 
         public void Start()
         {
-            var tcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 6000);
-            tcpListener.Start(100);
-            while (true)
+            try
             {
-                var tcpClient = tcpListener.AcceptTcpClient();
-                var thread = new Thread(() => actionDespatcher(tcpClient));
-                thread.Start();
+                var appSettings = ConfigurationManager.AppSettings;
+                IPAddress serverIpAddress = IPAddress.Parse(appSettings["ServerIpAddress"]);
+                int serverPort = Int32.Parse(appSettings["ServerPort"]);
+
+                var tcpListener = new TcpListener(serverIpAddress, serverPort);
+                tcpListener.Start(100);
+                while (true)
+                {
+                    var tcpClient = tcpListener.AcceptTcpClient();
+                    var thread = new Thread(() => actionDespatcher(tcpClient));
+                    thread.Start();
+                }
+            }
+            catch (ConfigurationErrorsException)
+            {
+                throw new Exception("Error leyendo app settings.");
+            }
+            catch (FormatException)
+            {
+                throw new Exception("Server IP o puerto invalido.");
             }
         }
 
