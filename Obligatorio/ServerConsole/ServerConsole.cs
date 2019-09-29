@@ -193,9 +193,33 @@ namespace ServerConsole
                                                     Console.ReadLine();
                                                     break;
                                                 case 3:
-                                                    Console.ForegroundColor = ConsoleColor.Red;
-                                                    Console.WriteLine("FALTA IMPLEMENTAR: CORREGIR TAREA");
-                                                    Console.ResetColor();
+                                                    List<string> coursesWithTasksToCorrect = getCoursesWithTasksToCorrect();
+                                                    if (coursesWithTasksToCorrect.Count > 0)
+                                                    {
+                                                        Console.WriteLine("Ingrese la posición del curso del que desea corregir una tarea: ");
+                                                        int courseToAddTask = selectMenuOption(1, coursesWithTasksToCorrect.Count);
+                                                        string courseName = coursesWithTasksToCorrect[courseToAddTask-1].Split('&')[0];
+                                                        List<string> tasksToCorrect = getTasksToCorrect(courseName);
+                                                        Console.WriteLine("Ingrese la tarea que desea corregir: ");
+                                                        int taskToCorrect = selectMenuOption(1, tasksToCorrect.Count);
+                                                        string taskName = tasksToCorrect[taskToCorrect - 1].Split('[')[0].Remove(tasksToCorrect[taskToCorrect - 1].Split('[')[0].Count() - 1);
+                                                        List<string> studentsToCorrect = getStudentsToCorrect(coursesWithTasksToCorrect[courseToAddTask - 1].Split('&')[0], taskName);
+                                                        Console.WriteLine("Selecione al estudiante que desea calificar: ");
+                                                        int studentToCorrect = selectMenuOption(1, studentsToCorrect.Count);
+                                                        int studentNumber = Int32.Parse(studentsToCorrect[studentToCorrect - 1].Split(' ')[0]);
+                                                        Console.WriteLine("Ingrese la nota(1-"+ tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0] + "): ");
+                                                        int score = selectMenuOption(1, Int32.Parse(tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0]));
+                                                        server.scoreStudent(courseName,taskName, studentNumber, score);
+                                                        Console.ForegroundColor = ConsoleColor.Green;
+                                                        Console.WriteLine("Estudiante calificado con éxito.");
+                                                        Console.ResetColor();
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No hay cursos con tareas asignadas.");
+                                                        Console.ResetColor();
+                                                    }
                                                     Console.ReadLine();
                                                     break;
                                                 case 4:
@@ -219,6 +243,27 @@ namespace ServerConsole
             }
         }
 
+        private static List<string> getStudentsToCorrect(string course, string task)
+        {
+            List<string> students = server.getStudentsToCorrect(course,task);
+            for (int i = 0; i < students.Count; i++)
+            {
+                Console.WriteLine((i + 1) + ") " + students[i]);
+            }
+            return students;
+        }
+
+        private static List<string> getTasksToCorrect(string course)
+        {
+            List<string> tasks = server.getTasksToCorrect(course);
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                string task = tasks[i];
+                Console.WriteLine((i+1) + ") " + task);
+            }
+            return tasks;
+        }
+
         private static List<string> getCoursesWithTasks()
         {
             List<string> courses = server.getCoursesWithTasks();
@@ -228,11 +273,24 @@ namespace ServerConsole
                 {
                     string course = courses[i].Split('&')[0];
                     var tasks = courses[i].Split('&')[1].Split(',');
-                    Console.WriteLine(course + ":");
+                    Console.WriteLine((i + 1) + ") " + course + ":");
                     foreach (string task in tasks)
                     {
                         Console.WriteLine("   -" + task);
                     }
+                }
+            }
+            return courses;
+        }
+
+        private static List<string> getCoursesWithTasksToCorrect()
+        {
+            List<string> courses = server.getCoursesWithTasksToCorrect();
+            if (courses.Count > 0)
+            {
+                for (int i = 0; i < courses.Count; i++)
+                {
+                    Console.WriteLine((i+1) + ") " + courses[i].Split('&')[0]);
                 }
             }
             return courses;
@@ -271,7 +329,7 @@ namespace ServerConsole
                 if (!(option >= minOption && option <= maxOption))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Opción incorrecta, seleccione nuevamente.");
+                    Console.WriteLine("Valor incorrecto, ingrese nuevamente.");
                     Console.ResetColor();
                 }
             }

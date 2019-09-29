@@ -23,14 +23,14 @@ namespace ClientConsole
         {
             while (true)
             {
-                showMenu(initMenuPath);
+                showMenu(initMenuPath,0);
                 Console.ReadLine();
                 Console.WriteLine("Estableciendo conexión con el servidor...");
                 client.Connect();
                 Console.WriteLine("Conexión establecida.\n");
                 bool getOutOfSessionMenu = false;
                 while (!getOutOfSessionMenu) {
-                    showMenu(sessionMenuPath);
+                    showMenu(sessionMenuPath,0);
                     int menuOption = selectMenuOption(1, 2);
                     switch (menuOption)
                     {
@@ -57,7 +57,7 @@ namespace ClientConsole
                             }
                             bool getOutOfMainMenu = false;
                             while (!getOutOfMainMenu) {
-                                showMenu(mainMenuPath);
+                                showMenu(mainMenuPath, studentLogged);
                                 int mainMenuOption = selectMenuOption(1, 3);
                                 switch (mainMenuOption)
                                 {
@@ -65,7 +65,7 @@ namespace ClientConsole
                                         bool getOutOfCoursesMenu = false;
                                         while (!getOutOfCoursesMenu)
                                         {
-                                            showMenu(coursesMenuPath);
+                                            showMenu(coursesMenuPath, studentLogged);
                                             int coursesMenuOption = selectMenuOption(1, 5);
                                             switch (coursesMenuOption)
                                             {
@@ -217,10 +217,28 @@ namespace ClientConsole
             return option;
         }
 
-        private static void showMenu(string menuPath)
+        private static void showMenu(string menuPath, int student)
         {
-            Console.Clear();
-            Console.WriteLine(File.ReadAllText(menuPath));
+            if (student == 0)
+            {
+                Console.Clear();
+                Console.WriteLine(File.ReadAllText(menuPath));
+            }
+            else
+            {
+                Console.Clear();
+                string notifications = client.GetNotifications(student);
+                if (!notifications.Split(';')[0].Equals(""))
+                {
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    foreach (string notification in notifications.Split(';'))
+                    {
+                        Console.WriteLine(notification);
+                    }
+                    Console.ResetColor();
+                }
+                Console.WriteLine(File.ReadAllText(menuPath));
+            }
         }
 
 

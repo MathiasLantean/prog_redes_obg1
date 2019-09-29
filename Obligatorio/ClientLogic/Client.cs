@@ -134,5 +134,11 @@ namespace ClientLogic
             }
             return result;
         }
+
+        public string GetNotifications(int student)
+        {
+            sendData(Action.GetNotifications, student.ToString(), this.stream);
+            return reciveData();
+        }
     }
 }

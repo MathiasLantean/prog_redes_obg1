@@ -11,6 +11,11 @@ namespace Domain
         public User User { get; set; }
         public int Number { get; set; }
 
+        public override string ToString()
+        {
+            return Number + " (" + User.Email + ")";  
+        }
+
         public override bool Equals(object obj)
         {
             if (this.Number == ((Student)obj).Number)

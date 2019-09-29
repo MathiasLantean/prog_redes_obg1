@@ -107,5 +107,25 @@ namespace ServerLogic
         {
             return route.getCoursesWithTasks();
         }
+
+        public List<string> getCoursesWithTasksToCorrect()
+        {
+            return route.getCoursesWithTasksToCorrect();
+        }
+
+        public List<string> getTasksToCorrect(string course)
+        {
+            return route.getTasksToCorrect(course);
+        }
+
+        public List<string> getStudentsToCorrect(string course, string task)
+        {
+            return route.getStudentsToCorrect(course, task);
+        }
+
+        public void scoreStudent(string courseName, string taskName, int studentNumber, int score)
+        {
+            route.scoreStudent(courseName, taskName, studentNumber, score);
+        }
     }
 }
