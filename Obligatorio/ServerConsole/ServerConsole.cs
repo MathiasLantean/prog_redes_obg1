@@ -15,7 +15,8 @@ namespace ServerConsole
         private static string adminConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
         private static string adminMenu = adminConsolePath + "\\Menus\\adminMenu.txt";
         private static string initMenuPath = adminConsolePath + "\\Menus\\InitMenu.txt";
-        private static string cousesMenuPath = adminConsolePath + "\\Menus\\CousesMenu.txt";
+        private static string coursesMenuPath = adminConsolePath + "\\Menus\\CousesMenu.txt";
+        private static string tasksMenuPath = adminConsolePath + "\\Menus\\TaskMenu.txt";
 
         static void Main(string[] args)
         {
@@ -50,7 +51,9 @@ namespace ServerConsole
                     connPass = server.LoginAdmin(username, pass);
                     if (!connPass)
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Usuario o contraseña incorrectos, intente nuevamente.");
+                        Console.ResetColor();
                     }
                 }
 
@@ -58,7 +61,7 @@ namespace ServerConsole
                 while (!getOutOfAdminMenu)
                 {
                     showMenu(adminMenu);
-                    int mainMenuOption = selectMenuOption(1, 4);
+                    int mainMenuOption = selectMenuOption(1, 3);
                     switch (mainMenuOption)
                     {
                         case 1:
@@ -66,20 +69,38 @@ namespace ServerConsole
                             string studentUsername = Console.ReadLine();
                             Console.WriteLine("Ingrese la contraseña del nuevo estudiante:");
                             string studentPass = Console.ReadLine();
-                            server.addStudent(studentUsername, studentPass);
+                            if(server.addStudent(studentUsername, studentPass))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Estudiante agregado correctamente.");
+                                Console.ResetColor();
+                            }else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Ya existe un estudiante con ese correo electrónico.");
+                                Console.ResetColor();
+                            }
+                            Console.ReadLine();
                             break;
                         case 2:
                             bool getOutOfCoursesMenu = false;
                             while (!getOutOfCoursesMenu)
                             {
-                                showMenu(cousesMenuPath);
-                                int cousesMenuOption = selectMenuOption(1, 4);
+                                showMenu(coursesMenuPath);
+                                int cousesMenuOption = selectMenuOption(1, 5);
                                 switch (cousesMenuOption)
                                 {
                                     case 1:
-                                        getCoursesListAtString();
-                                        Console.WriteLine();
-                                        Console.WriteLine("Presione ENTER para continuar.");
+                                        List<string> coursesAtString = getCoursesListAtString();
+                                        if (coursesAtString.Count > 0)
+                                        {
+                                        }
+                                        else
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Red;
+                                            Console.WriteLine("No hay cursos disponibles para visualizar.");
+                                            Console.ResetColor();
+                                        }
                                         Console.ReadLine();
                                         break;
                                     case 2:
@@ -88,6 +109,10 @@ namespace ServerConsole
                                         Console.Write("Ingrese el nombre del nuevo curso: ");
                                         string newCourse = Console.ReadLine();
                                         server.addCourse(newCourse);
+                                        Console.ForegroundColor = ConsoleColor.Green;
+                                        Console.WriteLine("Curso agregado correctamente.");
+                                        Console.ResetColor();
+                                        Console.ReadLine();
                                         break;
                                     case 3:
                                         List<string> coursesToRemove = getCoursesListAtString();
@@ -97,9 +122,89 @@ namespace ServerConsole
                                             Console.Write("Ingrese la posición del curso a borrar: ");
                                             int removeCourse = selectMenuOption(1, coursesToRemove.Count);
                                             server.removeCourse(removeCourse - 1);
+                                            Console.ForegroundColor = ConsoleColor.Green;
+                                            Console.WriteLine("Curso removido correctamente.");
+                                            Console.ResetColor();
                                         }
+                                        else
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Red;
+                                            Console.WriteLine("No hay cursos disponibles para remover.");
+                                            Console.ResetColor();
+                                        }
+                                        Console.ReadLine();
                                         break;
                                     case 4:
+                                        bool getOutOfTaskMenu = false;
+                                        while (!getOutOfTaskMenu)
+                                        {
+                                            showMenu(tasksMenuPath);
+                                            int taskMenuOption = selectMenuOption(1, 4);
+                                            switch (taskMenuOption)
+                                            {
+                                                case 1:
+                                                    List<string> coursesWithTasks = getCoursesWithTasks();
+                                                    if (coursesWithTasks.Count > 0)
+                                                    {
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No hay cursos con tareas asignadas.");
+                                                        Console.ResetColor();
+                                                    }
+                                                    Console.ReadLine();
+                                                    break;
+                                                case 2:
+                                                    List<string> coursesToAddTask = getPosibleCoursesToAddTask();
+                                                    if (coursesToAddTask.Count > 0)
+                                                    {
+                                                        Console.WriteLine("Ingrese la posición del curso al que desea agregarle una tarea: ");
+                                                        int courseToAddTask = selectMenuOption(1, coursesToAddTask.Count);
+                                                        Console.WriteLine("Ingrese el nombre de la tarea: ");
+                                                        string taskName = Console.ReadLine();
+                                                        int maxTaskScore = Int32.Parse(coursesToAddTask[courseToAddTask - 1].Split('&')[1]);
+                                                        int taskScore = 0;
+                                                        while (!(taskScore > 0 && taskScore <= maxTaskScore))
+                                                        {
+                                                            Console.WriteLine("Ingrese la calificación máxima de la tarea (1-" + maxTaskScore + "): ");
+                                                            try
+                                                            {
+                                                                taskScore = Int32.Parse(Console.ReadLine());
+                                                            }
+                                                            catch
+                                                            {
+                                                                Console.ForegroundColor = ConsoleColor.Red;
+                                                                Console.WriteLine("El valor ingresador debe ser numérico.");
+                                                                Console.ResetColor();
+                                                            }
+                                                        }
+                                                        server.AddTask(coursesToAddTask[courseToAddTask - 1].Split('&')[0], taskName, taskScore);
+                                                        Console.ForegroundColor = ConsoleColor.Green;
+                                                        Console.WriteLine("Tarea agregada correctamente.");
+                                                        Console.ResetColor();
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.ForegroundColor = ConsoleColor.Red;
+                                                        Console.WriteLine("No hay cursos disponibles para agregar tareas.");
+                                                        Console.ResetColor();
+                                                    }
+                                                    Console.ReadLine();
+                                                    break;
+                                                case 3:
+                                                    Console.ForegroundColor = ConsoleColor.Red;
+                                                    Console.WriteLine("FALTA IMPLEMENTAR: CORREGIR TAREA");
+                                                    Console.ResetColor();
+                                                    Console.ReadLine();
+                                                    break;
+                                                case 4:
+                                                    getOutOfTaskMenu = true;
+                                                    break;
+                                            }
+                                        }
+                                        break;
+                                    case 5:
                                         getOutOfCoursesMenu = true;
                                         break;
                                 }
@@ -107,13 +212,40 @@ namespace ServerConsole
                             }
                             break;
                         case 3:
-                            break;
-                        case 4:
                             getOutOfAdminMenu = true;
                             break;
                     }
                 }
             }
+        }
+
+        private static List<string> getCoursesWithTasks()
+        {
+            List<string> courses = server.getCoursesWithTasks();
+            if (courses.Count > 0)
+            {
+                for (int i = 0; i < courses.Count; i++)
+                {
+                    string course = courses[i].Split('&')[0];
+                    var tasks = courses[i].Split('&')[1].Split(',');
+                    Console.WriteLine(course + ":");
+                    foreach (string task in tasks)
+                    {
+                        Console.WriteLine("   -" + task);
+                    }
+                }
+            }
+            return courses;
+        }
+
+        private static List<string> getPosibleCoursesToAddTask()
+        {
+            List<string> courses = server.getPosibleCoursesToAddTask();
+            for (int i = 0; i < courses.Count; i++)
+            {
+                Console.WriteLine((i + 1) + ") " + courses[i].Split('&')[0]);
+            }
+            return courses;
         }
 
         private static List<string> getCoursesListAtString()
@@ -138,7 +270,9 @@ namespace ServerConsole
                 catch { option = 0; }
                 if (!(option >= minOption && option <= maxOption))
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Opción incorrecta, seleccione nuevamente.");
+                    Console.ResetColor();
                 }
             }
             return option;

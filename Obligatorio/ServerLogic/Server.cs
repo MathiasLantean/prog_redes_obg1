@@ -73,9 +73,9 @@ namespace ServerLogic
             return route.LoginAdmin(username, pass);
         }
 
-        public void addStudent(string studentUsername, string studentPass)
+        public bool addStudent(string studentUsername, string studentPass)
         {
-            route.addStudent(studentUsername, studentPass);
+            return route.addStudent(studentUsername, studentPass);
         }
 
         public List<string> getCousesAtString()
@@ -91,6 +91,21 @@ namespace ServerLogic
         public void removeCourse(int removeCourse)
         {
             route.removeCourse(removeCourse);
+        }
+
+        public List<string> getPosibleCoursesToAddTask()
+        {
+            return route.getPosibleCoursesToAddTask();
+        }
+
+        public void AddTask(string courseName, string taskName, int taskScore)
+        {
+            route.AddTask(courseName, taskName, taskScore);
+        }
+
+        public List<string> getCoursesWithTasks()
+        {
+            return route.getCoursesWithTasks();
         }
     }
 }
