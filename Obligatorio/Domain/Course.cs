@@ -11,7 +11,7 @@ namespace Domain
         public string Name { get; set; }
         public List<Tuple<Student, int>> Students = new List<Tuple<Student, int>>();
         public List<Task> Tasks = new List<Task>();
-        public List<Tuple<Student,Tuple<Task,Tuple<string, int>>>> StudentTasks = new List<Tuple<Student, Tuple<Task, Tuple<string, int>>>>();
+        public List<Tuple<Task,Tuple<Student, Tuple<string, int>>>> StudentTasks = new List<Tuple<Task, Tuple<Student, Tuple<string, int>>>>();
         public int totalTaskScore = 0;
 
         public override bool Equals(object obj)
@@ -33,6 +33,33 @@ namespace Domain
             {
                 return this.Name;
             }
+        }
+
+        public void RemoveStudentTask(string taskName, int studentNumber)
+        {
+            this.StudentTasks = new List<Tuple<Task,Tuple<Student,Tuple<string,int>>>>(StudentTasks.Where(x=>!(x.Item1.TaskName.Equals(taskName) && x.Item2.Item1.Number == studentNumber)));
+        }
+
+        public void AddScoreToTask(string taskName, int studentNumber, int score)
+        {
+            Task task = this.Tasks.Find(x => x.TaskName.Equals(taskName));
+            Student student = this.Students.Find(x=>x.Item1.Number == studentNumber).Item1;
+
+            Tuple<string, int> corrected = new Tuple<string, int>("Corregido", score);
+            Tuple<Student, Tuple<string, int>> studentCorrected = new Tuple<Student, Tuple<string, int>>(student, corrected);
+            this.StudentTasks.Add(new Tuple<Task, Tuple<Student, Tuple<string, int>>>(task, studentCorrected));
+
+            CorrectTotalScore(studentNumber, score);
+        }
+
+        private void CorrectTotalScore(int studentNumber, int score)
+        {
+            int oldScore = this.Students.Find(x => x.Item1.Number == studentNumber).Item2;
+            Student student = this.Students.Find(x => x.Item1.Number == studentNumber).Item1;
+            int newScore = oldScore + score;
+            Tuple<Student, int> studentScore = new Tuple<Student, int>(student, score);
+            this.Students = new List<Tuple<Student, int>>(Students.Where(x => x.Item1.Number != studentNumber));
+            this.Students.Add(studentScore);
         }
     }
 }

@@ -22,7 +22,8 @@ namespace RouteController
         Unsuscribe,
         GetSuscribedCoursesWithTasks,
         GetCourseTasks,
-        UpdateTaskToCourse
+        UpdateTaskToCourse,
+        GetNotifications
     }
 
     public class ActionDispatcher
@@ -34,12 +35,14 @@ namespace RouteController
             {Action.GetSuscribedCourses, "GetSuscribedCourses"},
             {Action.GetSuscribedCoursesWithTasks, "GetSuscribedCoursesWithTasks"},
             {Action.GetCourseTasks, "GetCourseTasks"},
+            {Action.GetNotifications, "GetNotifications"},
             {Action.Suscribe, "Suscribe"},
             {Action.Unsuscribe, "Unsuscribe"},
             {Action.UpdateTaskToCourse, "UpdateTaskToCourse"}
         };
         private List<Admin> admins;
         private List<Student> students;
+        private List<Tuple<Student,string>> notifications;
         private List<Course> courses;
         private int lastStudentRegistered = 200000;
         static readonly object _locker = new object();
@@ -49,6 +52,7 @@ namespace RouteController
         {
             this.students = new List<Student>();
             this.courses = new List<Course>();
+            this.notifications = new List<Tuple<Student, string>>();
             this.admins = new List<Admin>();
             this.admins.Add(new Admin()); 
         }
@@ -114,6 +118,75 @@ namespace RouteController
                 coursesAtString.Add(course.ToString());
             }
             return coursesAtString;
+        }
+
+        public List<string> getTasksToCorrect(string course)
+        {
+            List<string> tasksAtString = new List<string>();
+            var tasks = courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x=>x.Item2.Item2.Item2 == 0).Select(x=>x.Item1);
+            foreach (Domain.Task task in tasks)
+            {
+                if (!tasksAtString.Contains(task.ToString()))
+                {
+                    tasksAtString.Add(task.ToString());
+                }
+            }
+            return tasksAtString;
+        }
+
+        public void scoreStudent(string courseName, string taskName, int studentNumber, int score)
+        {
+            Course course = courses.Find(x => x.Name.Equals(courseName));
+            Student student = this.students.Find(x => x.Number == studentNumber);
+            course.RemoveStudentTask(taskName, studentNumber);
+            course.AddScoreToTask(taskName, studentNumber, score);
+            string newNotifications = "";
+            if (notifications.Where(x => x.Item1.Number == studentNumber).Count() > 0)
+            {
+                newNotifications = notifications.Find(x => x.Item1.Number == studentNumber).Item2;
+                newNotifications += ";Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+            }
+            else
+            {
+                newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+            }
+            this.notifications = new List<Tuple<Student, string>> (this.notifications.Where(x => x.Item1.Number != studentNumber));
+            this.notifications.Add(new Tuple<Student, string>(student, newNotifications));
+        }
+
+        public List<string> getStudentsToCorrect(string course, string task)
+        {
+            List<string> studentsToCorrect = new List<string>();
+            var students = courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x => x.Item1.TaskName.Equals(task)).Select(x=>x.Item2);
+            foreach (var student in students)
+            {
+                studentsToCorrect.Add(student.Item1.ToString());
+            }
+            return studentsToCorrect;
+        }
+
+        public List<string> getCoursesWithTasksToCorrect()
+        {
+            List<string> coursesWithTasksToCorrect = new List<string>();
+
+            foreach (Course course in courses)
+            {
+                if (course.StudentTasks.Where(x=>x.Item2.Item2.Item2 == 0).Count() > 0)
+                {
+                    string courseWithTasks = course.ToString() + "&";
+
+                    foreach (Domain.Task task in course.Tasks)
+                    {
+                        if(course.StudentTasks.Where(x=>x.Item1.TaskName.Equals(task.TaskName)&&x.Item2.Item2.Item2==0).Count() > 0)
+                        {
+                            courseWithTasks += task.ToString() + ",";
+                        }
+                    }
+                    courseWithTasks = courseWithTasks.Remove(courseWithTasks.Count() - 1);
+                    coursesWithTasksToCorrect.Add(courseWithTasks);
+                }
+            }
+            return coursesWithTasksToCorrect;
         }
 
         public List<string> getCoursesWithTasks()
@@ -300,7 +373,17 @@ namespace RouteController
             string tasksString = string.Join(",", course.Tasks.Select(x => x.ToString()));
             sendData(Action.Response, tasksString, networkStream);
         }
-        
+
+        public void GetNotifications(string data, NetworkStream networkStream)
+        {
+            string studentNotifications = "";
+            if (this.notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
+            {
+                studentNotifications = this.notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
+            }
+            sendData(Action.Response, studentNotifications, networkStream);
+        }
+
         public void UpdateTaskToCourse(string data, NetworkStream networkStream)
         {
             int totalToRemove = 0;
@@ -331,9 +414,9 @@ namespace RouteController
                 Student student = course.Students.Find(x => x.Item1.Number == studentNumber).Item1;
                 Domain.Task task = course.Tasks.Find(x => x.TaskName.Equals(taskName));
                 Tuple<string, int> pathScore = new Tuple<string, int>(taskPath, 0);
-                Tuple<Domain.Task, Tuple<string, int>> taskPathScore = new Tuple<Domain.Task, Tuple<string, int>>(task, pathScore);
-                Tuple<Student,Tuple<Domain.Task, Tuple<string, int>>> studentTaskPathScore = new Tuple<Student,Tuple<Domain.Task, Tuple<string, int>>>(student, taskPathScore);
-                course.StudentTasks.Add(studentTaskPathScore);
+                Tuple<Student, Tuple<string, int>> studentPathScore = new Tuple<Student, Tuple<string, int>>(student, pathScore);
+                Tuple< Domain.Task,Tuple <Student, Tuple<string, int>>> taskStutendPathScore = new Tuple<Domain.Task,Tuple<Student, Tuple<string, int>>>(task, studentPathScore);
+                course.StudentTasks.Add(taskStutendPathScore);
 
                 sendData(Action.Response, "T", networkStream);
             }
