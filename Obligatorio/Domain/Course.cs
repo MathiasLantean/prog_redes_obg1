@@ -14,6 +14,10 @@ namespace Domain
         public List<Tuple<Task,Tuple<Student, Tuple<string, int>>>> StudentTasks = new List<Tuple<Task, Tuple<Student, Tuple<string, int>>>>();
         public int totalTaskScore = 0;
 
+        private static readonly object studentslock = new object();
+        private static readonly object studentTaskslock = new object();
+        private static readonly object taskslock = new object();
+
         public override bool Equals(object obj)
         {
             return this.Name.Equals(((Course)obj).Name);
@@ -37,9 +41,20 @@ namespace Domain
 
         public void RemoveStudentTask(string taskName, int studentNumber)
         {
-            this.StudentTasks = new List<Tuple<Task,Tuple<Student,Tuple<string,int>>>>(StudentTasks.Where(x=>!(x.Item1.TaskName.Equals(taskName) && x.Item2.Item1.Number == studentNumber)));
+            lock (studentTaskslock)
+            {
+                this.StudentTasks = new List<Tuple<Task, Tuple<Student, Tuple<string, int>>>>(StudentTasks.Where(x => !(x.Item1.TaskName.Equals(taskName) && x.Item2.Item1.Number == studentNumber)));
+            }
         }
 
+        public void AddTask(Task taskToAdd)
+        {
+            lock (taskslock)
+            {
+                this.Tasks.Add(taskToAdd);
+                this.totalTaskScore = this.totalTaskScore + taskToAdd.MaxScore;
+            }
+        }
         public void AddScoreToTask(string taskName, int studentNumber, int score)
         {
             Task task = this.Tasks.Find(x => x.TaskName.Equals(taskName));
@@ -47,7 +62,10 @@ namespace Domain
 
             Tuple<string, int> corrected = new Tuple<string, int>("Corregido", score);
             Tuple<Student, Tuple<string, int>> studentCorrected = new Tuple<Student, Tuple<string, int>>(student, corrected);
-            this.StudentTasks.Add(new Tuple<Task, Tuple<Student, Tuple<string, int>>>(task, studentCorrected));
+            lock (studentTaskslock)
+            {
+                this.StudentTasks.Add(new Tuple<Task, Tuple<Student, Tuple<string, int>>>(task, studentCorrected));
+            }
 
             CorrectTotalScore(studentNumber, score);
         }
@@ -58,8 +76,11 @@ namespace Domain
             Student student = this.Students.Find(x => x.Item1.Number == studentNumber).Item1;
             int newScore = oldScore + score;
             Tuple<Student, int> studentScore = new Tuple<Student, int>(student, score);
-            this.Students = new List<Tuple<Student, int>>(Students.Where(x => x.Item1.Number != studentNumber));
-            this.Students.Add(studentScore);
+            lock (studentslock)
+            {
+                this.Students = new List<Tuple<Student, int>>(Students.Where(x => x.Item1.Number != studentNumber));
+                this.Students.Add(studentScore);
+            }
         }
     }
 }
