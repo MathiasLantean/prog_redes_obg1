@@ -213,8 +213,9 @@ namespace RouteController
             if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
             {
                 studentNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
-                sendData(Action.Response, studentNotifications, networkStream);
+                DataSystem.Instance.Notifications = new List<Tuple<Student,string>>(DataSystem.Instance.Notifications.Where(x => !x.Item1.Number.ToString().Equals(data)));
             }
+            sendData(Action.Response, studentNotifications, networkStream);
         }
 
         public void UpdateTaskToCourse(string data, NetworkStream networkStream)

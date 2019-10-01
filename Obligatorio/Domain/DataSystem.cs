@@ -128,7 +128,7 @@ namespace Domain
         {
             lock (notificationslock)
             {
-                this.Notifications = new List<Tuple<Student, string>>(DataSystem.Instance.Notifications.Where(x => x.Item1.Number != student.Number));
+                this.Notifications = new List<Tuple<Student, string>>(DataSystem.Instance.Notifications.Where(x => !x.Item1.Equals(student)));
                 this.Notifications.Add(new Tuple<Student, string>(student, newNotifications));
             }
         }

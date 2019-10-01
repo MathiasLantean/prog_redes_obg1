@@ -13,6 +13,8 @@ namespace ClientLogic
     {
         private NetworkStream stream;
         private TcpClient tcpClient;
+        private NetworkStream streamNotifications;
+        private TcpClient tcpClientNotifications;
         public void Connect()
         {
             try
@@ -39,6 +41,32 @@ namespace ClientLogic
             }
         }
 
+        public void ConnectNotification(int studentNumber)
+        {
+            try
+            {
+                var appSettings = ConfigurationManager.AppSettings;
+                IPAddress serverIpAddress = IPAddress.Parse(appSettings["ServerIpAddress"]);
+                int serverPort = Int32.Parse(appSettings["ServerPort"]);
+                IPAddress clientIpAddress = IPAddress.Parse(appSettings["ClientIpAddress"]);
+                int clientPort = Int32.Parse(appSettings["ClientPort"]);
+
+                var tcpListener = new TcpListener(serverIpAddress, serverPort);
+
+                this.tcpClientNotifications = new TcpClient(new IPEndPoint(clientIpAddress, clientPort));
+                tcpClientNotifications.Connect(new IPEndPoint(serverIpAddress, serverPort));
+                this.streamNotifications = tcpClientNotifications.GetStream();
+            }
+            catch (ConfigurationErrorsException)
+            {
+                throw new Exception("Error leyendo app settings.");
+            }
+            catch (FormatException)
+            {
+                throw new Exception("Server IP o puerto invalido.");
+            }
+        }
+
         public void Disconnect()
         {
             this.stream.Close();
@@ -50,14 +78,14 @@ namespace ClientLogic
             var payload = user + "&" + password;
             sendData(Action.Login, payload, this.stream);
 
-            return reciveData();
+            return reciveData(this.stream);
 
         }
 
         public string GetCourses(int studentNumber)
         {
             sendData(Action.GetCourses, studentNumber.ToString(), this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
 
         public void Suscribe(string cursonumeroestudiante)
@@ -76,7 +104,7 @@ namespace ClientLogic
             networkStream.Write(messageInBytes, 0, messageInBytes.Length);
         }
 
-        private string reciveData()
+        private string reciveData(NetworkStream stream)
         {
             var action = new byte[4];
             ReadDataFromStream(4, stream, action);
@@ -106,13 +134,13 @@ namespace ClientLogic
         public string GetNotSuscribedCourses(int studentNumber)
         {
             sendData(Action.GetNotSuscribedCourses, studentNumber.ToString(), this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
 
         public string GetSuscribedCourses(int studentNumber)
         {
             sendData(Action.GetSuscribedCourses, studentNumber.ToString(), this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
 
         public void Unsuscribe(string cursonumeroestudiante)
@@ -123,13 +151,13 @@ namespace ClientLogic
         public string GetSuscribedCoursesWithTasks(int studentNumber)
         {
             sendData(Action.GetSuscribedCoursesWithTasks, studentNumber.ToString(), this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
 
         public string GetCourseTasks(string course)
         {
             sendData(Action.GetCourseTasks, course, this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
 
         public string UpdateTaskToCourse(string courseName, string taskName, string taskPath, int studentNumber)
@@ -137,7 +165,7 @@ namespace ClientLogic
             string extension = Path.GetExtension(taskPath);
             string taskFile = ACharToString(File.ReadAllBytes(taskPath).Select(x=>(char)x).ToArray());
             sendData(Action.UpdateTaskToCourse, courseName + "&" + taskName + "&" + studentNumber + "&"+ extension + "&" + taskFile, this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
         private string ACharToString(char[] arrChar)
         {
@@ -151,8 +179,8 @@ namespace ClientLogic
 
         public string GetNotifications(int student)
         {
-            sendData(Action.GetNotifications, student.ToString(), this.stream);
-            return reciveData();
+            sendData(Action.GetNotifications, student.ToString(), this.streamNotifications);
+            return reciveData(this.streamNotifications);
         }
 
         public void Logout(int studentNumber)
@@ -163,7 +191,7 @@ namespace ClientLogic
         public string GetCalifications(int studentNumber)
         {
             sendData(Action.GetCalifications, studentNumber.ToString(), this.stream);
-            return reciveData();
+            return reciveData(this.stream);
         }
     }
 }

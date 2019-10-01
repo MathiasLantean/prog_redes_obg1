@@ -13,27 +13,35 @@ namespace ClientConsole
     class ClientConsole
     {
         private static Client client = new Client();
+        private static Client notifications = new Client();
         private static string clientConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
         private static string initMenuPath = clientConsolePath + "\\Menus\\InitMenu.txt";
         private static string sessionMenuPath = clientConsolePath + "\\Menus\\sessionMenu.txt";
         private static string mainMenuPath = clientConsolePath + "\\Menus\\mainMenu.txt";
         private static string coursesMenuPath = clientConsolePath + "\\Menus\\coursesMenu.txt";
-        private static int studentLogged;
+        private static int studentLogged = 0;
 
         static void Main(string[] args)
         {
+            Thread clientThread = new Thread(MainMenu);
+            Thread notificationsThread = new Thread(GetNotifications);
+            notificationsThread.Start();
+            clientThread.Start();
+        }
+
+        private static void MainMenu()
+        {
             while (true)
             {
-                showMenu(initMenuPath,0);
+                showMenu(initMenuPath, 0);
                 Console.ReadLine();
                 Console.WriteLine("Estableciendo conexión con el servidor...");
                 client.Connect();
                 Console.WriteLine("Conexión establecida.\n");
-                //var thread = new Thread(() => askForNotifications());
-                //thread.Start();
                 bool getOutOfSessionMenu = false;
-                while (!getOutOfSessionMenu) {
-                    showMenu(sessionMenuPath,0);
+                while (!getOutOfSessionMenu)
+                {
+                    showMenu(sessionMenuPath, 0);
                     int menuOption = selectMenuOption(1, 2);
                     switch (menuOption)
                     {
@@ -46,29 +54,31 @@ namespace ClientConsole
                                 Console.Write("Ingresar constraseña: ");
                                 string password = Console.ReadLine();
                                 var loginResponse = client.Login(user, password);
-                                if(loginResponse.Split('&')[0] == "T")
+                                if (loginResponse.Split('&')[0] == "T")
                                 {
                                     connPass = true;
                                     studentLogged = Int32.Parse(loginResponse.Split('&')[1]);
                                 }
                                 if (!connPass)
                                 {
-                                    if(loginResponse.Split('&')[0] == "L")
+                                    if (loginResponse.Split('&')[0] == "L")
                                     {
                                         Console.ForegroundColor = ConsoleColor.Red;
                                         Console.WriteLine("Ya has iniciado sesión.");
                                         Console.ResetColor();
-                                    }else
+                                    }
+                                    else
                                     {
                                         Console.ForegroundColor = ConsoleColor.Red;
                                         Console.WriteLine("Usuario o contraseña incorrectos, intente nuevamente.");
                                         Console.ResetColor();
                                     }
-                                    
+
                                 }
                             }
                             bool getOutOfMainMenu = false;
-                            while (!getOutOfMainMenu) {
+                            while (!getOutOfMainMenu)
+                            {
                                 showMenu(mainMenuPath, studentLogged);
                                 int mainMenuOption = selectMenuOption(1, 3);
                                 switch (mainMenuOption)
@@ -142,19 +152,20 @@ namespace ClientConsole
                                                         showList(suscribedCoursesWithTasks);
                                                         Console.WriteLine("Seleccione el curso al cual desea subirle una tarea.");
                                                         int selectedCourse = selectMenuOption(1, suscribedCoursesWithTasks.Split(',').Length);
-                                                        var courseTasks = client.GetCourseTasks(suscribedCoursesWithTasks.Split(',')[selectedCourse-1]);
+                                                        var courseTasks = client.GetCourseTasks(suscribedCoursesWithTasks.Split(',')[selectedCourse - 1]);
                                                         showList(courseTasks);
                                                         Console.WriteLine("Seleccione la tarea que desea subir.");
                                                         int selectedTask = selectMenuOption(1, courseTasks.Split(',').Length);
                                                         Console.WriteLine("Ingrese la ubicación de la tarea.");
                                                         string taskPath = Console.ReadLine();
-                                                        var taskUpdated = client.UpdateTaskToCourse(suscribedCoursesWithTasks.Split(',')[selectedCourse - 1], courseTasks.Split(',')[selectedTask-1], taskPath, studentLogged);
+                                                        var taskUpdated = client.UpdateTaskToCourse(suscribedCoursesWithTasks.Split(',')[selectedCourse - 1], courseTasks.Split(',')[selectedTask - 1], taskPath, studentLogged);
                                                         if (taskUpdated.Equals("T"))
                                                         {
                                                             Console.ForegroundColor = ConsoleColor.Green;
                                                             Console.WriteLine("Has subido la tarea correctamente.");
                                                             Console.ResetColor();
-                                                        }else
+                                                        }
+                                                        else
                                                         {
                                                             Console.ForegroundColor = ConsoleColor.Red;
                                                             Console.WriteLine("Ha ocurrido un error al subir la tarea, intente nuevamente.");
@@ -187,13 +198,15 @@ namespace ClientConsole
                                                 try
                                                 {
                                                     string[] tasks = course.Split('&')[1].Split(';');
-                                                    foreach(string task in tasks)
+                                                    foreach (string task in tasks)
                                                     {
                                                         Console.WriteLine("   " + task);
                                                     }
-                                                }catch { }
+                                                }
+                                                catch { }
                                             }
-                                        }else
+                                        }
+                                        else
                                         {
                                             Console.ForegroundColor = ConsoleColor.Red;
                                             Console.WriteLine("No tienes calificaciones disponbiles para ver.");
@@ -219,23 +232,6 @@ namespace ClientConsole
                             getOutOfSessionMenu = true;
                             break;
                     }
-                }
-            }
-        }
-
-        private static void askForNotifications()
-        {
-            while (true)
-            {
-                string notifications = client.GetNotifications(studentLogged);
-                if (!notifications.Split(';')[0].Equals(""))
-                {
-                    Console.ForegroundColor = ConsoleColor.Blue;
-                    foreach (string notification in notifications.Split(';'))
-                    {
-                        Console.WriteLine(notification);
-                    }
-                    Console.ResetColor();
                 }
             }
         }
@@ -268,6 +264,28 @@ namespace ClientConsole
             return option;
         }
 
+        private static void GetNotifications()
+        {
+            notifications.ConnectNotification(studentLogged);
+            while (true)
+            {
+                while (studentLogged != 0)
+                {
+                    string notification = notifications.GetNotifications(studentLogged);
+
+                    if (!notification.Split(';')[0].Equals(""))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        foreach (string notif in notification.Split(';'))
+                        {
+                            Console.WriteLine(notification);
+                        }
+                        Console.ResetColor();
+                    }
+                }
+            }
+            
+        }
         private static void showMenu(string menuPath, int student)
         {
             if (student == 0)
