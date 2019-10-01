@@ -52,7 +52,7 @@ namespace Domain
             lock (taskslock)
             {
                 this.Tasks.Add(taskToAdd);
-                this.totalTaskScore = this.totalTaskScore + taskToAdd.MaxScore;
+                this.totalTaskScore += taskToAdd.MaxScore;
             }
         }
         public void AddScoreToTask(string taskName, int studentNumber, int score)
@@ -81,6 +81,35 @@ namespace Domain
                 this.Students = new List<Tuple<Student, int>>(Students.Where(x => x.Item1.Number != studentNumber));
                 this.Students.Add(studentScore);
             }
+        }
+
+        public List<Task> GetTasks()
+        {
+            return this.Tasks;
+        }
+
+        public string GetStudentCalification(Student student)
+        {
+            try
+            {
+                return this.Students.Find(x => x.Item1.Equals(student)).Item2.ToString();
+            }catch
+            {
+                return "0";
+            }
+        }
+
+        public string GetStudentTaskCalification(Task task, Student student)
+        {
+            try
+            {
+                return this.StudentTasks.Where(x => x.Item1.Equals(task)).Select(x => x.Item2).Where(x => x.Item1.Equals(student)).Select(x => x.Item2).First().Item2.ToString();
+            }
+            catch
+            {
+                return "0";
+            }
+            
         }
     }
 }

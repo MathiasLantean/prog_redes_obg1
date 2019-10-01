@@ -29,8 +29,8 @@ namespace ClientConsole
                 Console.WriteLine("Estableciendo conexión con el servidor...");
                 client.Connect();
                 Console.WriteLine("Conexión establecida.\n");
-                var thread = new Thread(() => askForNotifications());
-                thread.Start();
+                //var thread = new Thread(() => askForNotifications());
+                //thread.Start();
                 bool getOutOfSessionMenu = false;
                 while (!getOutOfSessionMenu) {
                     showMenu(sessionMenuPath,0);
@@ -53,9 +53,18 @@ namespace ClientConsole
                                 }
                                 if (!connPass)
                                 {
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("Usuario o contraseña incorrectos, intente nuevamente.");
-                                    Console.ResetColor();
+                                    if(loginResponse.Split('&')[0] == "L")
+                                    {
+                                        Console.ForegroundColor = ConsoleColor.Red;
+                                        Console.WriteLine("Ya has iniciado sesión.");
+                                        Console.ResetColor();
+                                    }else
+                                    {
+                                        Console.ForegroundColor = ConsoleColor.Red;
+                                        Console.WriteLine("Usuario o contraseña incorrectos, intente nuevamente.");
+                                        Console.ResetColor();
+                                    }
+                                    
                                 }
                             }
                             bool getOutOfMainMenu = false;
@@ -167,9 +176,29 @@ namespace ClientConsole
                                         }
                                         break;
                                     case 2:
-                                        Console.ForegroundColor = ConsoleColor.Red;
-                                        Console.WriteLine("FALTA IMPLEMENTAR: CONSULTAR NOTAS");
-                                        Console.ResetColor();
+                                        var califications = client.GetCalifications(studentLogged);
+                                        if (!califications.Equals(""))
+                                        {
+                                            string[] courses = califications.Split('$');
+                                            foreach (string course in courses)
+                                            {
+                                                string courseCalification = course.Split('&')[0];
+                                                Console.WriteLine(courseCalification);
+                                                try
+                                                {
+                                                    string[] tasks = course.Split('&')[1].Split(';');
+                                                    foreach(string task in tasks)
+                                                    {
+                                                        Console.WriteLine("   " + task);
+                                                    }
+                                                }catch { }
+                                            }
+                                        }else
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Red;
+                                            Console.WriteLine("No tienes calificaciones disponbiles para ver.");
+                                            Console.ResetColor();
+                                        }
                                         Console.ReadLine();
                                         break;
                                     case 3:
@@ -177,8 +206,10 @@ namespace ClientConsole
                                         Console.WriteLine("\nCerrando sesión...");
                                         Console.WriteLine("Sesión cerrada.\n");
                                         Console.ResetColor();
-                                        Console.ReadLine();
+                                        client.Logout(studentLogged);
+                                        studentLogged = 0;
                                         getOutOfMainMenu = true;
+                                        Console.ReadLine();
                                         break;
                                 }
                             }

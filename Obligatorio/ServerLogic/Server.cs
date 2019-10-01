@@ -138,7 +138,7 @@ namespace ServerLogic
         {
             Course course = DataSystem.Instance.GetCourse(new Course() { Name = courseName });
             Task taskToAdd = new Task() { TaskName = taskName, MaxScore = taskScore };
-            course.Tasks.Add(taskToAdd);
+            course.AddTask(taskToAdd);
         }
 
         public List<string> getCoursesWithTasks()

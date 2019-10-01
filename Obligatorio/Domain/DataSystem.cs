@@ -13,6 +13,7 @@ namespace Domain
 
         public List<Admin> Admins { get; }
         public List<Student> Students { get; }
+        public List<Student> StudentsLogged { get; }
         public List<Tuple<Student, string>> Notifications { get; set; }
         public List<Course> Courses { get; }
 
@@ -20,10 +21,12 @@ namespace Domain
         private static readonly object studentslock = new object();
         private static readonly object courseslock = new object();
         private static readonly object notificationslock = new object();
-        
+        private static readonly object studentloggedlock = new object();
+
         private DataSystem()
         {
             this.Students = new List<Student>();
+            this.StudentsLogged = new List<Student>();
             this.Courses = new List<Course>();
             this.Notifications = new List<Tuple<Student, string>>();
             this.Admins = new List<Admin>();
@@ -49,8 +52,14 @@ namespace Domain
         {
             lock (adminsLock)
             {
-                Admin currentAdmin = this.Admins.Find(x => x.Equals(adminToLogin));
-                return (currentAdmin.User.Password == adminToLogin.User.Password);
+                try
+                {
+                    Admin currentAdmin = this.Admins. Find(x =>x.Equals(adminToLogin));
+                    return currentAdmin.User.Password == adminToLogin.User.Password;
+                }catch
+                {
+                    return false;
+                }
             }
         }
 
@@ -69,6 +78,19 @@ namespace Domain
             return false;
         }
 
+        public bool AddStudentLogged(Student studentToAdd)
+        {
+
+            lock (studentloggedlock)
+            {
+                if (!this.StudentsLogged.Contains(studentToAdd))
+                {
+                    this.StudentsLogged.Add(studentToAdd);
+                    return true;
+                }
+            }
+            return false;
+        }
 
         public Student GetStudent(Student studentToFind)
         {
@@ -109,6 +131,44 @@ namespace Domain
                 this.Notifications = new List<Tuple<Student, string>>(DataSystem.Instance.Notifications.Where(x => x.Item1.Number != student.Number));
                 this.Notifications.Add(new Tuple<Student, string>(student, newNotifications));
             }
+        }
+
+        public bool IsStudentLogged(Student student)
+        {
+            lock (studentloggedlock)
+            {
+                if (!this.StudentsLogged.Contains(student))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void RemoveStudentLogged(Student student)
+        {
+            lock (studentloggedlock)
+            {
+                try { 
+                    this.StudentsLogged.Remove(student);
+                }catch { }
+            }
+        }
+
+        public List<Course> GetStudentCourses(Student student)
+        {
+            List<Course> studentCourses = new List<Course>();
+            lock (courseslock)
+            {
+                foreach (Course course in this.Courses)
+                {
+                    if (course.Students.Select(x => x.Item1).Contains(student))
+                    {
+                        studentCourses.Add(course);
+                    }
+                }
+            }
+            return studentCourses;
         }
     }
 }

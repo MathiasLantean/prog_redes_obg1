@@ -154,5 +154,16 @@ namespace ClientLogic
             sendData(Action.GetNotifications, student.ToString(), this.stream);
             return reciveData();
         }
+
+        public void Logout(int studentNumber)
+        {
+            sendData(Action.Logout, studentNumber.ToString(), this.stream);
+        }
+
+        public string GetCalifications(int studentNumber)
+        {
+            sendData(Action.GetCalifications, studentNumber.ToString(), this.stream);
+            return reciveData();
+        }
     }
 }

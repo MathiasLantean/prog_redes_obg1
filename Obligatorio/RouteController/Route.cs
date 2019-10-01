@@ -20,14 +20,18 @@ namespace RouteController
         GetSuscribedCoursesWithTasks,
         GetCourseTasks,
         UpdateTaskToCourse,
-        GetNotifications
+        GetNotifications,
+        Logout,
+        GetCalifications
     }
 
     public class ActionDispatcher
     {
         private static Dictionary<Action, string> actionDispatcher = new Dictionary<Action, string>() {
             {Action.Login, "Login"},
+            {Action.Logout, "Logout"},
             {Action.GetCourses, "GetCourses"},
+            {Action.GetCalifications, "GetCalifications"},
             {Action.GetNotSuscribedCourses, "GetNotSuscribedCourses"},
             {Action.GetSuscribedCourses, "GetSuscribedCourses"},
             {Action.GetSuscribedCoursesWithTasks, "GetSuscribedCoursesWithTasks"},
@@ -59,24 +63,6 @@ namespace RouteController
 
         }
 
-        public bool LoginUser(int studentNumber, string pass)
-        {
-            User user;
-            Student studentLog;
-            
-            user = new User() { Password = pass };
-            studentLog = new Student() { User = user, Number = studentNumber };
-
-            
-            if (DataSystem.Instance.Students.Contains(studentLog))
-            {
-                Student currentStudent = DataSystem.Instance.GetStudent(studentLog);
-                return (currentStudent.User.Password == pass);
-            }
-            
-            return false;
-        }
-
         private void sendData(Action action, string payload, NetworkStream networkStream)
         {
             var actionInBit = BitConverter.GetBytes((int)action);
@@ -105,13 +91,31 @@ namespace RouteController
 
             if (LoginUser(studentNumber, studentPw))
             {
-                sendData(Action.Response, "T&" + studentNumber, networkStream);
+                Student studentLogged = new Student() { Number = studentNumber };
+                if (!IsAlreadyLogged(studentLogged))
+                {
+                    AddStudentLogged(studentLogged);
+                    sendData(Action.Response, "T&" + studentNumber, networkStream);
+                }else
+                {
+                    sendData(Action.Response, "L", networkStream);
+                }
             }
             else
             {
                 sendData(Action.Response, "F", networkStream);
             }
 
+        }
+
+        private void AddStudentLogged(Student student)
+        {
+            DataSystem.Instance.AddStudentLogged(DataSystem.Instance.GetStudent(student));
+        }
+
+        private bool IsAlreadyLogged(Student student)
+        {
+            return DataSystem.Instance.IsStudentLogged(student);
         }
 
         private int GetStudentNumberByEmail(string studentEmail)
@@ -123,6 +127,20 @@ namespace RouteController
             catch
             {
                 return 0;
+            }
+        }
+
+        public bool LoginUser(int studentNumber, string pass)
+        {
+            User user = new User() { Password = pass }; ;
+            Student studentLog = new Student() { User = user, Number = studentNumber };
+
+            try {
+                Student currentStudent = DataSystem.Instance.Students.Find(x => x.Number == studentNumber);
+                return (currentStudent.User.Password.Equals(pass));
+            }catch
+            {
+                return false;
             }
         }
 
@@ -195,8 +213,8 @@ namespace RouteController
             if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
             {
                 studentNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
+                sendData(Action.Response, studentNotifications, networkStream);
             }
-            sendData(Action.Response, studentNotifications, networkStream);
         }
 
         public void UpdateTaskToCourse(string data, NetworkStream networkStream)
@@ -220,7 +238,7 @@ namespace RouteController
                 fileTaskInBytes[i] = (byte)fileTaskInChar[i];
             }
 
-            string taskPath = "./"+ courseName + "-" + studentNumber + "-" + taskName + "-" + extension;
+            string taskPath = "./"+ courseName + "-" + studentNumber + "-" + taskName + extension;
 
             try
             {
@@ -232,7 +250,6 @@ namespace RouteController
                 Tuple<Student, Tuple<string, int>> studentPathScore = new Tuple<Student, Tuple<string, int>>(student, pathScore);
                 Tuple< Domain.Task,Tuple <Student, Tuple<string, int>>> taskStutendPathScore = new Tuple<Domain.Task,Tuple<Student, Tuple<string, int>>>(task, studentPathScore);
                 course.StudentTasks.Add(taskStutendPathScore);
-
                 sendData(Action.Response, "T", networkStream);
             }
             catch
@@ -250,7 +267,40 @@ namespace RouteController
             }
             return result;
         }
-    }
 
-    
+        public void GetCalifications(string data, NetworkStream networkStream)
+        {
+            int studentNumber = Int32.Parse(data);
+            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber });
+            List<Course> studentCourses = DataSystem.Instance.GetStudentCourses(student);
+            string califications = "";
+            foreach (Course course in studentCourses)
+            {
+                string studentCourseCalification = course.GetStudentCalification(student);
+                califications += course.ToString() + " - Calificación: " + studentCourseCalification + "/100&";
+                List<Domain.Task> tasks = course.GetTasks();
+                foreach(Domain.Task task in tasks)
+                {
+                    string studentTaskCalification = course.GetStudentTaskCalification(task,student);
+                    califications += task.ToString() + " - Calificación: " + studentTaskCalification + ";";
+                }
+                if(tasks.Count() > 0)
+                {
+                    califications = califications.Remove(califications.Count() - 1);
+                }
+                califications += "$";
+            }
+            if (studentCourses.Count() > 0)
+            {
+                califications = califications.Remove(califications.Count() - 1);
+            }
+            sendData(Action.Response, califications, networkStream);
+        }
+
+        public void Logout(string data, NetworkStream networkStream)
+        {
+            var studentNumber = Int32.Parse(data);
+            DataSystem.Instance.RemoveStudentLogged(new Student() { Number = studentNumber });
+        }
+    }
 }
