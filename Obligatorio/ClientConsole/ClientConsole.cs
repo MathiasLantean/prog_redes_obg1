@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ClientLogic;
 using ServerLogic;
 using System.IO;
+using System.Threading;
 
 namespace ClientConsole
 {
@@ -28,6 +29,8 @@ namespace ClientConsole
                 Console.WriteLine("Estableciendo conexión con el servidor...");
                 client.Connect();
                 Console.WriteLine("Conexión establecida.\n");
+                var thread = new Thread(() => askForNotifications());
+                thread.Start();
                 bool getOutOfSessionMenu = false;
                 while (!getOutOfSessionMenu) {
                     showMenu(sessionMenuPath,0);
@@ -189,6 +192,23 @@ namespace ClientConsole
             }
         }
 
+        private static void askForNotifications()
+        {
+            while (true)
+            {
+                string notifications = client.GetNotifications(studentLogged);
+                if (!notifications.Split(';')[0].Equals(""))
+                {
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    foreach (string notification in notifications.Split(';'))
+                    {
+                        Console.WriteLine(notification);
+                    }
+                    Console.ResetColor();
+                }
+            }
+        }
+
         private static void showList(string list)
         {
             var courses = list.Split(',');
@@ -227,16 +247,6 @@ namespace ClientConsole
             else
             {
                 Console.Clear();
-                string notifications = client.GetNotifications(student);
-                if (!notifications.Split(';')[0].Equals(""))
-                {
-                    Console.ForegroundColor = ConsoleColor.Blue;
-                    foreach (string notification in notifications.Split(';'))
-                    {
-                        Console.WriteLine(notification);
-                    }
-                    Console.ResetColor();
-                }
                 Console.WriteLine(File.ReadAllText(menuPath));
             }
         }

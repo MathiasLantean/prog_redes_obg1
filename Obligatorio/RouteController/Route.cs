@@ -189,15 +189,15 @@ namespace RouteController
             sendData(Action.Response, tasksString, networkStream);
         }
 
-        //public void GetNotifications(string data, NetworkStream networkStream)
-        //{
-        //    string studentNotifications = "";
-        //    if (DataSystem.Instance.notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
-        //    {
-        //        studentNotifications = DataSystem.Instance.notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
-        //    }
-        //    sendData(Action.Response, studentNotifications, networkStream);
-        //}
+        public void GetNotifications(string data, NetworkStream networkStream)
+        {
+            string studentNotifications = "";
+            if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
+            {
+                studentNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
+            }
+            sendData(Action.Response, studentNotifications, networkStream);
+        }
 
         public void UpdateTaskToCourse(string data, NetworkStream networkStream)
         {

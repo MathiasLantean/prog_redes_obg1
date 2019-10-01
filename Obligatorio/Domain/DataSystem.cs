@@ -13,7 +13,7 @@ namespace Domain
 
         public List<Admin> Admins { get; }
         public List<Student> Students { get; }
-        public List<Tuple<Student, string>> Notifications { get; }
+        public List<Tuple<Student, string>> Notifications { get; set; }
         public List<Course> Courses { get; }
 
         private static readonly object adminsLock= new object();
@@ -102,5 +102,13 @@ namespace Domain
             }
         }
 
+        public void CreateNotification(Student student, string newNotifications)
+        {
+            lock (notificationslock)
+            {
+                this.Notifications = new List<Tuple<Student, string>>(DataSystem.Instance.Notifications.Where(x => x.Item1.Number != student.Number));
+                this.Notifications.Add(new Tuple<Student, string>(student, newNotifications));
+            }
+        }
     }
 }

@@ -216,18 +216,17 @@ namespace ServerLogic
             Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber });
             course.RemoveStudentTask(taskName, studentNumber);
             course.AddScoreToTask(taskName, studentNumber, score);
-            //string newNotifications = "";
-            //if (notifications.Where(x => x.Item1.Number == studentNumber).Count() > 0)
-            //{
-            //    newNotifications = notifications.Find(x => x.Item1.Number == studentNumber).Item2;
-            //    newNotifications += ";Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
-            //}
-            //else
-            //{
-            //    newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
-            //}
-            //this.notifications = new List<Tuple<Student, string>>(this.notifications.Where(x => x.Item1.Number != studentNumber));
-            //this.notifications.Add(new Tuple<Student, string>(student, newNotifications));
+            string newNotifications = "";
+            if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number == studentNumber).Count() > 0)
+            {
+                newNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number == studentNumber).Item2;
+                newNotifications += ";Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+            }
+            else
+            {
+                newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+            }
+            DataSystem.Instance.CreateNotification(student, newNotifications);
         }
     }
 }
