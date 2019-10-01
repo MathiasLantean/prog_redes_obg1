@@ -73,6 +73,12 @@ namespace ClientLogic
             this.tcpClient.Close();
         }
 
+        public void DisconnectNotifications()
+        {
+            this.streamNotifications.Close();
+            this.tcpClientNotifications.Close();
+        }
+
         public string Login(string user, string password)
         {
             var payload = user + "&" + password;
@@ -95,25 +101,38 @@ namespace ClientLogic
 
         private void sendData(Action action, string payload, NetworkStream networkStream)
         {
-            var actionInBit = BitConverter.GetBytes((int)action);
-            var messageInBytes = Encoding.UTF8.GetBytes(payload);
-            var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
+            try
+            {
+                var actionInBit = BitConverter.GetBytes((int)action);
+                var messageInBytes = Encoding.UTF8.GetBytes(payload);
+                var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
 
-            networkStream.Write(actionInBit, 0, actionInBit.Length);
-            networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
-            networkStream.Write(messageInBytes, 0, messageInBytes.Length);
+                networkStream.Write(actionInBit, 0, actionInBit.Length);
+                networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
+                networkStream.Write(messageInBytes, 0, messageInBytes.Length);
+            }catch
+            {
+
+            }
         }
 
         private string reciveData(NetworkStream stream)
         {
-            var action = new byte[4];
-            ReadDataFromStream(4, stream, action);
-            var responseLength = new byte[4];
-            ReadDataFromStream(4, stream, responseLength);
-            var responseInBytes = new byte[BitConverter.ToInt32(responseLength, 0)];
-            ReadDataFromStream(responseInBytes.Length, stream, responseInBytes);
-            string data = Encoding.UTF8.GetString(responseInBytes);
-            return data;
+            try
+            {
+                var action = new byte[4];
+                ReadDataFromStream(4, stream, action);
+                var responseLength = new byte[4];
+                ReadDataFromStream(4, stream, responseLength);
+                var responseInBytes = new byte[BitConverter.ToInt32(responseLength, 0)];
+                ReadDataFromStream(responseInBytes.Length, stream, responseInBytes);
+                string data = Encoding.UTF8.GetString(responseInBytes);
+                return data;
+            }
+            catch
+            {
+                return "";
+            }
         }
 
         private static void ReadDataFromStream(int length, NetworkStream networkStream, byte[] dataBytes)
@@ -163,7 +182,8 @@ namespace ClientLogic
         public string UpdateTaskToCourse(string courseName, string taskName, string taskPath, int studentNumber)
         {
             string extension = Path.GetExtension(taskPath);
-            string taskFile = ACharToString(File.ReadAllBytes(taskPath).Select(x=>(char)x).ToArray());
+            string taskFile = ACharToString(File.ReadAllBytes(taskPath).Select(x => (char)x).ToArray());
+
             sendData(Action.UpdateTaskToCourse, courseName + "&" + taskName + "&" + studentNumber + "&"+ extension + "&" + taskFile, this.stream);
             return reciveData(this.stream);
         }
@@ -192,6 +212,11 @@ namespace ClientLogic
         {
             sendData(Action.GetCalifications, studentNumber.ToString(), this.stream);
             return reciveData(this.stream);
+        }
+
+        public bool ExistStreamNotifications()
+        {
+            return this.streamNotifications != null;
         }
     }
 }

@@ -24,8 +24,6 @@ namespace ClientConsole
         static void Main(string[] args)
         {
             Thread clientThread = new Thread(MainMenu);
-            Thread notificationsThread = new Thread(GetNotifications);
-            notificationsThread.Start();
             clientThread.Start();
         }
 
@@ -58,6 +56,8 @@ namespace ClientConsole
                                 {
                                     connPass = true;
                                     studentLogged = Int32.Parse(loginResponse.Split('&')[1]);
+                                    Thread notificationsThread = new Thread(GetNotifications);
+                                    notificationsThread.Start();
                                 }
                                 if (!connPass)
                                 {
@@ -158,6 +158,29 @@ namespace ClientConsole
                                                         int selectedTask = selectMenuOption(1, courseTasks.Split(',').Length);
                                                         Console.WriteLine("Ingrese la ubicación de la tarea.");
                                                         string taskPath = Console.ReadLine();
+                                                        bool isValid = false;
+                                                        while (!isValid)
+                                                        {
+                                                            try
+                                                            {
+                                                                if (Path.IsPathRooted(taskPath))
+                                                                {
+                                                                    isValid = true;
+                                                                }
+                                                                else
+                                                                {
+                                                                    Console.ForegroundColor = ConsoleColor.Red;
+                                                                    Console.WriteLine("Path inválido (el path debe estar sin comillas).");
+                                                                    Console.ResetColor();
+                                                                    taskPath = Console.ReadLine();
+                                                                }
+                                                            }catch {
+                                                                Console.ForegroundColor = ConsoleColor.Red;
+                                                                Console.WriteLine("Path inválido (el path debe estar sin comillas).");
+                                                                Console.ResetColor();
+                                                                taskPath = Console.ReadLine();
+                                                            }
+                                                        }
                                                         var taskUpdated = client.UpdateTaskToCourse(suscribedCoursesWithTasks.Split(',')[selectedCourse - 1], courseTasks.Split(',')[selectedTask - 1], taskPath, studentLogged);
                                                         if (taskUpdated.Equals("T"))
                                                         {
@@ -220,6 +243,7 @@ namespace ClientConsole
                                         Console.WriteLine("Sesión cerrada.\n");
                                         Console.ResetColor();
                                         client.Logout(studentLogged);
+                                        notifications.DisconnectNotifications();
                                         studentLogged = 0;
                                         getOutOfMainMenu = true;
                                         Console.ReadLine();
@@ -271,16 +295,20 @@ namespace ClientConsole
             {
                 while (studentLogged != 0)
                 {
-                    string notification = notifications.GetNotifications(studentLogged);
-
-                    if (!notification.Split(';')[0].Equals(""))
+                    if (notifications.ExistStreamNotifications())
                     {
-                        Console.ForegroundColor = ConsoleColor.Blue;
-                        foreach (string notif in notification.Split(';'))
+                        string notification = notifications.GetNotifications(studentLogged);
+
+                        if (!notification.Split(';')[0].Equals(""))
                         {
-                            Console.WriteLine(notification);
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            foreach (string notif in notification.Split(';'))
+                            {
+                                Console.WriteLine(notif);
+                            }
+                            Console.ResetColor();
                         }
-                        Console.ResetColor();
+                        Thread.Sleep(30000);
                     }
                 }
             }
