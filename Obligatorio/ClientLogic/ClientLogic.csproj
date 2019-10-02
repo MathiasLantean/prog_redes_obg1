@@ -46,17 +46,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.csproj">
-      <Project>{26e1821f-c4be-4ec1-b82e-dd6ad314d663}</Project>
-      <Name>Domain</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RouteController\RouteController.csproj">
       <Project>{d3cfc444-ea78-4c71-8928-fe3b8e97ff35}</Project>
       <Name>RouteController</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ServerLogic\ServerLogic.csproj">
-      <Project>{3cab065f-720c-4e60-941c-c146aefc7c9c}</Project>
-      <Name>ServerLogic</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

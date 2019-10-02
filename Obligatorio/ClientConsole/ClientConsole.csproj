@@ -60,10 +60,6 @@
       <Project>{57fa52cc-c25f-4c3d-8507-52c23d96708d}</Project>
       <Name>ClientLogic</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ServerLogic\ServerLogic.csproj">
-      <Project>{3cab065f-720c-4e60-941c-c146aefc7c9c}</Project>
-      <Name>ServerLogic</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
