@@ -11,6 +11,12 @@ namespace Domain
         public string Email { get; set; }
         public string Password { get; set; }
 
+        public User()
+        {
+            Email = "";
+            Password = "";
+        }
+
         public override bool Equals(object obj)
         {
             return this.Email.Equals(((User)obj).Email);

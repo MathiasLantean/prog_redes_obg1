@@ -41,7 +41,7 @@ namespace ClientLogic
             }
         }
 
-        public void ConnectNotification(int studentNumber)
+        public void ConnectNotification()
         {
             try
             {
@@ -101,19 +101,13 @@ namespace ClientLogic
 
         private void sendData(Action action, string payload, NetworkStream networkStream)
         {
-            try
-            {
-                var actionInBit = BitConverter.GetBytes((int)action);
-                var messageInBytes = Encoding.UTF8.GetBytes(payload);
-                var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
+            var actionInBit = BitConverter.GetBytes((int)action);
+            var messageInBytes = Encoding.UTF8.GetBytes(payload);
+            var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
 
-                networkStream.Write(actionInBit, 0, actionInBit.Length);
-                networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
-                networkStream.Write(messageInBytes, 0, messageInBytes.Length);
-            }catch
-            {
-
-            }
+            networkStream.Write(actionInBit, 0, actionInBit.Length);
+            networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
+            networkStream.Write(messageInBytes, 0, messageInBytes.Length);
         }
 
         private string reciveData(NetworkStream stream)

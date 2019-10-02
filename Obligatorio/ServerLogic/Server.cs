@@ -15,7 +15,7 @@ namespace ServerLogic
     public class Server
     {
 
-        private ActionDispatcher route = new ActionDispatcher();
+        //private ActionDispatcher route = new ActionDispatcher();
         private DataSystem data = DataSystem.Instance;
 
         public void Start()
@@ -31,7 +31,8 @@ namespace ServerLogic
                 while (true)
                 {
                     var tcpClient = tcpListener.AcceptTcpClient();
-                    var thread = new Thread(() => actionDespatcher(tcpClient));
+                    ActionDispatcher route = new ActionDispatcher();
+                    var thread = new Thread(() => actionDespatcher(tcpClient,route));
                     thread.Start();
                 }
             }
@@ -45,13 +46,8 @@ namespace ServerLogic
             }
         }
 
-        private void actionDespatcher(TcpClient tcpClient)
+        private void actionDespatcher(TcpClient tcpClient, ActionDispatcher route)
         {
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("SE CONECTÓ UN USUARIO.");
-            Console.ResetColor();
-
             var networkStream = tcpClient.GetStream();
 
             while (true)
@@ -213,7 +209,7 @@ namespace ServerLogic
         public void scoreStudent(string courseName, string taskName, int studentNumber, int score)
         {
             Course course = DataSystem.Instance.GetCourse(new Course() { Name = courseName});
-            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber });
+            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber , User = new User()});
             course.RemoveStudentTask(taskName, studentNumber);
             course.AddScoreToTask(taskName, studentNumber, score);
             string newNotifications = "";

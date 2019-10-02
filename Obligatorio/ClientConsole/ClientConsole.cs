@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ClientLogic;
-using ServerLogic;
 using System.IO;
 using System.Threading;
 
@@ -24,7 +23,9 @@ namespace ClientConsole
         static void Main(string[] args)
         {
             Thread clientThread = new Thread(MainMenu);
+            Thread notificationsThread = new Thread(GetNotifications);
             clientThread.Start();
+            notificationsThread.Start();
         }
 
         private static void MainMenu()
@@ -56,8 +57,6 @@ namespace ClientConsole
                                 {
                                     connPass = true;
                                     studentLogged = Int32.Parse(loginResponse.Split('&')[1]);
-                                    Thread notificationsThread = new Thread(GetNotifications);
-                                    notificationsThread.Start();
                                 }
                                 if (!connPass)
                                 {
@@ -290,7 +289,7 @@ namespace ClientConsole
 
         private static void GetNotifications()
         {
-            notifications.ConnectNotification(studentLogged);
+            notifications.ConnectNotification();
             while (true)
             {
                 while (studentLogged != 0)

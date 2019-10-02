@@ -91,7 +91,7 @@ namespace RouteController
 
             if (LoginUser(studentNumber, studentPw))
             {
-                Student studentLogged = new Student() { Number = studentNumber };
+                Student studentLogged = new Student() { Number = studentNumber, User = new User() };
                 if (!IsAlreadyLogged(studentLogged))
                 {
                     AddStudentLogged(studentLogged);
@@ -148,7 +148,7 @@ namespace RouteController
         {
             var dataArray = data.Split('&');
             Course course = DataSystem.Instance.Courses.Find(x => x.Name.Equals(dataArray[0]));
-            Student student = new Student() { Number = Int32.Parse(dataArray[1]) };
+            Student student = new Student() { Number = Int32.Parse(dataArray[1]) , User = new User()};
             if (!course.Students.Select(x=>x.Item1).Contains(student))
             {
                 Student studentSub = DataSystem.Instance.Students.Find(x => x.Equals(student));
@@ -160,7 +160,7 @@ namespace RouteController
         {
             var dataArray = data.Split('&');
             Course course = DataSystem.Instance.Courses.Find(x => x.Name.Equals(dataArray[0]));
-            Student student = new Student() { Number = Int32.Parse(dataArray[1]) };
+            Student student = new Student() { Number = Int32.Parse(dataArray[1]) , User = new User()};
             if (course.Students.Select(x => x.Item1).Contains(student))
             {
                 Student studentUnsub = DataSystem.Instance.Students.Find(x => x.Equals(student));
@@ -272,7 +272,7 @@ namespace RouteController
         public void GetCalifications(string data, NetworkStream networkStream)
         {
             int studentNumber = Int32.Parse(data);
-            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber });
+            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber , User = new User()});
             List<Course> studentCourses = DataSystem.Instance.GetStudentCourses(student);
             string califications = "";
             foreach (Course course in studentCourses)
@@ -301,7 +301,7 @@ namespace RouteController
         public void Logout(string data, NetworkStream networkStream)
         {
             var studentNumber = Int32.Parse(data);
-            DataSystem.Instance.RemoveStudentLogged(new Student() { Number = studentNumber });
+            DataSystem.Instance.RemoveStudentLogged(new Student() { Number = studentNumber, User = new User()});
         }
     }
 }
