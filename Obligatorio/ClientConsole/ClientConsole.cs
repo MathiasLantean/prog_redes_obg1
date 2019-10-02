@@ -13,7 +13,7 @@ namespace ClientConsole
     {
         private static Client client = new Client();
         private static Client notifications = new Client();
-        private static string clientConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
+        private static string clientConsolePath = System.Environment.CurrentDirectory;
         private static string initMenuPath = clientConsolePath + "\\Menus\\InitMenu.txt";
         private static string sessionMenuPath = clientConsolePath + "\\Menus\\sessionMenu.txt";
         private static string mainMenuPath = clientConsolePath + "\\Menus\\mainMenu.txt";

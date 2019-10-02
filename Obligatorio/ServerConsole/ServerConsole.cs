@@ -12,7 +12,7 @@ namespace ServerConsole
     class ServerConsole
     {
         private static Server server = new Server();
-        private static string adminConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
+        private static string adminConsolePath = System.Environment.CurrentDirectory;
         private static string adminMenu = adminConsolePath + "\\Menus\\adminMenu.txt";
         private static string initMenuPath = adminConsolePath + "\\Menus\\InitMenu.txt";
         private static string coursesMenuPath = adminConsolePath + "\\Menus\\CousesMenu.txt";
