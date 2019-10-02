@@ -117,10 +117,17 @@ namespace ServerConsole
                                         Console.WriteLine();
                                         Console.Write("Ingrese el nombre del nuevo curso: ");
                                         string newCourse = Console.ReadLine();
-                                        server.addCourse(newCourse);
-                                        Console.ForegroundColor = ConsoleColor.Green;
-                                        Console.WriteLine("Curso agregado correctamente.");
-                                        Console.ResetColor();
+                                        if (server.addCourse(newCourse))
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Green;
+                                            Console.WriteLine("Curso agregado correctamente.");
+                                            Console.ResetColor();
+                                        }else
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Red;
+                                            Console.WriteLine("Ya existe un curso con ese nombre.");
+                                            Console.ResetColor();
+                                        }
                                         Console.ReadLine();
                                         break;
                                     case 3:

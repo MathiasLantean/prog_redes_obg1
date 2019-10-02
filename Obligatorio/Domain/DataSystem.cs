@@ -108,11 +108,19 @@ namespace Domain
             }
         }
 
-        public void AddCourse(Course courseToAdd)
+        public bool AddCourse(Course courseToAdd)
         {
             lock (courseslock)
             {
-                this.Courses.Add(courseToAdd);
+                if (!DataSystem.Instance.Courses.Contains(courseToAdd))
+                {
+                    this.Courses.Add(courseToAdd);
+                    return true;
+                }else
+                {
+                    return false;
+                }
+                
             }
         }
 

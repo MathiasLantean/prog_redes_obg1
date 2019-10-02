@@ -105,10 +105,10 @@ namespace ServerLogic
             return coursesAtString;
         }
 
-        public void addCourse(string newCourse)
+        public bool addCourse(string newCourse)
         {
             Course course = new Course() { Name = newCourse };
-            DataSystem.Instance.AddCourse(course);
+            return DataSystem.Instance.AddCourse(course);
         }
 
         public void removeCourse(int courseToRemoveIndex)
