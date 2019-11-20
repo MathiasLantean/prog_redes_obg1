@@ -12,32 +12,40 @@ namespace ServerConsole
     class ServerConsole
     {
         private static Server server = new Server();
-        private static string adminConsolePath = System.Environment.CurrentDirectory.Remove(System.Environment.CurrentDirectory.Length - 9);
+        private static bool _isServerRunning;
+        private static string adminConsolePath = System.Environment.CurrentDirectory;
         private static string adminMenu = adminConsolePath + "\\Menus\\adminMenu.txt";
         private static string initMenuPath = adminConsolePath + "\\Menus\\InitMenu.txt";
         private static string coursesMenuPath = adminConsolePath + "\\Menus\\CousesMenu.txt";
         private static string tasksMenuPath = adminConsolePath + "\\Menus\\TaskMenu.txt";
 
-        static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var serverThread = new Thread(startServer);
-            var adminThread = new Thread(mainManuAdmin);
-            adminThread.Start();
-            serverThread.Start();
-            adminThread.Join();
-            serverThread.Join();
+            _isServerRunning = true;
+            await Task.Run(() => startServer().ConfigureAwait(false));
+            await mainManuAdmin().ConfigureAwait(false);
+            Console.Read();
         }
 
-        private static void startServer()
+        private static async Task startServer()
         {
-            server.Start();
+            try
+            {
+                await Task.Run(() => server.Start(_isServerRunning).ConfigureAwait(false));
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+                Console.ResetColor();
+            }
         }
 
-        private static void mainManuAdmin()
+        private static async Task mainManuAdmin()
         {
             while (true)
             {
-                showMenu(initMenuPath);
+                await showMenu(initMenuPath).ConfigureAwait(false);
                 Console.ReadLine();
                 string username;
                 string pass;
@@ -60,8 +68,8 @@ namespace ServerConsole
                 bool getOutOfAdminMenu = false;
                 while (!getOutOfAdminMenu)
                 {
-                    showMenu(adminMenu);
-                    int mainMenuOption = selectMenuOption(1, 3);
+                    await showMenu(adminMenu).ConfigureAwait(false);
+                    int mainMenuOption = await selectMenuOption(1, 3).ConfigureAwait(false);
                     switch (mainMenuOption)
                     {
                         case 1:
@@ -86,12 +94,12 @@ namespace ServerConsole
                             bool getOutOfCoursesMenu = false;
                             while (!getOutOfCoursesMenu)
                             {
-                                showMenu(coursesMenuPath);
-                                int cousesMenuOption = selectMenuOption(1, 5);
+                                await showMenu(coursesMenuPath).ConfigureAwait(false);
+                                int cousesMenuOption = await selectMenuOption(1, 5).ConfigureAwait(false);
                                 switch (cousesMenuOption)
                                 {
                                     case 1:
-                                        List<string> coursesAtString = getCoursesListAtString();
+                                        List<string> coursesAtString = await getCoursesListAtString().ConfigureAwait(false);
                                         if (coursesAtString.Count > 0)
                                         {
                                         }
@@ -104,23 +112,30 @@ namespace ServerConsole
                                         Console.ReadLine();
                                         break;
                                     case 2:
-                                        getCoursesListAtString();
+                                        await getCoursesListAtString().ConfigureAwait(false);
                                         Console.WriteLine();
                                         Console.Write("Ingrese el nombre del nuevo curso: ");
                                         string newCourse = Console.ReadLine();
-                                        server.addCourse(newCourse);
-                                        Console.ForegroundColor = ConsoleColor.Green;
-                                        Console.WriteLine("Curso agregado correctamente.");
-                                        Console.ResetColor();
+                                        if (server.addCourse(newCourse))
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Green;
+                                            Console.WriteLine("Curso agregado correctamente.");
+                                            Console.ResetColor();
+                                        }else
+                                        {
+                                            Console.ForegroundColor = ConsoleColor.Red;
+                                            Console.WriteLine("Ya existe un curso con ese nombre.");
+                                            Console.ResetColor();
+                                        }
                                         Console.ReadLine();
                                         break;
                                     case 3:
-                                        List<string> coursesToRemove = getCoursesListAtString();
+                                        List<string> coursesToRemove = await getCoursesListAtString().ConfigureAwait(false);
                                         if (coursesToRemove.Count > 0)
                                         {
                                             Console.WriteLine();
                                             Console.Write("Ingrese la posición del curso a borrar: ");
-                                            int removeCourse = selectMenuOption(1, coursesToRemove.Count);
+                                            int removeCourse = await selectMenuOption(1, coursesToRemove.Count).ConfigureAwait(false);
                                             server.removeCourse(removeCourse - 1);
                                             Console.ForegroundColor = ConsoleColor.Green;
                                             Console.WriteLine("Curso removido correctamente.");
@@ -138,12 +153,12 @@ namespace ServerConsole
                                         bool getOutOfTaskMenu = false;
                                         while (!getOutOfTaskMenu)
                                         {
-                                            showMenu(tasksMenuPath);
-                                            int taskMenuOption = selectMenuOption(1, 4);
+                                            await showMenu(tasksMenuPath).ConfigureAwait(false);
+                                            int taskMenuOption = await selectMenuOption(1, 4).ConfigureAwait(false);
                                             switch (taskMenuOption)
                                             {
                                                 case 1:
-                                                    List<string> coursesWithTasks = getCoursesWithTasks();
+                                                    List<string> coursesWithTasks = await getCoursesWithTasks().ConfigureAwait(false);
                                                     if (coursesWithTasks.Count > 0)
                                                     {
                                                     }
@@ -156,11 +171,11 @@ namespace ServerConsole
                                                     Console.ReadLine();
                                                     break;
                                                 case 2:
-                                                    List<string> coursesToAddTask = getPosibleCoursesToAddTask();
+                                                    List<string> coursesToAddTask = await getPosibleCoursesToAddTask().ConfigureAwait(false);
                                                     if (coursesToAddTask.Count > 0)
                                                     {
                                                         Console.WriteLine("Ingrese la posición del curso al que desea agregarle una tarea: ");
-                                                        int courseToAddTask = selectMenuOption(1, coursesToAddTask.Count);
+                                                        int courseToAddTask = await selectMenuOption(1, coursesToAddTask.Count).ConfigureAwait(false);
                                                         Console.WriteLine("Ingrese el nombre de la tarea: ");
                                                         string taskName = Console.ReadLine();
                                                         int maxTaskScore = Int32.Parse(coursesToAddTask[courseToAddTask - 1].Split('&')[1]);
@@ -193,22 +208,22 @@ namespace ServerConsole
                                                     Console.ReadLine();
                                                     break;
                                                 case 3:
-                                                    List<string> coursesWithTasksToCorrect = getCoursesWithTasksToCorrect();
+                                                    List<string> coursesWithTasksToCorrect = await getCoursesWithTasksToCorrect().ConfigureAwait(false);
                                                     if (coursesWithTasksToCorrect.Count > 0)
                                                     {
                                                         Console.WriteLine("Ingrese la posición del curso del que desea corregir una tarea: ");
-                                                        int courseToAddTask = selectMenuOption(1, coursesWithTasksToCorrect.Count);
+                                                        int courseToAddTask = await selectMenuOption(1, coursesWithTasksToCorrect.Count).ConfigureAwait(false);
                                                         string courseName = coursesWithTasksToCorrect[courseToAddTask-1].Split('&')[0];
-                                                        List<string> tasksToCorrect = getTasksToCorrect(courseName);
+                                                        List<string> tasksToCorrect = await getTasksToCorrect(courseName).ConfigureAwait(false);
                                                         Console.WriteLine("Ingrese la tarea que desea corregir: ");
-                                                        int taskToCorrect = selectMenuOption(1, tasksToCorrect.Count);
+                                                        int taskToCorrect = await selectMenuOption(1, tasksToCorrect.Count).ConfigureAwait(false);
                                                         string taskName = tasksToCorrect[taskToCorrect - 1].Split('[')[0].Remove(tasksToCorrect[taskToCorrect - 1].Split('[')[0].Count() - 1);
-                                                        List<string> studentsToCorrect = getStudentsToCorrect(coursesWithTasksToCorrect[courseToAddTask - 1].Split('&')[0], taskName);
+                                                        List<string> studentsToCorrect = await getStudentsToCorrect(coursesWithTasksToCorrect[courseToAddTask - 1].Split('&')[0], taskName).ConfigureAwait(false);
                                                         Console.WriteLine("Selecione al estudiante que desea calificar: ");
-                                                        int studentToCorrect = selectMenuOption(1, studentsToCorrect.Count);
+                                                        int studentToCorrect = await selectMenuOption(1, studentsToCorrect.Count).ConfigureAwait(false);
                                                         int studentNumber = Int32.Parse(studentsToCorrect[studentToCorrect - 1].Split(' ')[0]);
                                                         Console.WriteLine("Ingrese la nota(1-"+ tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0] + "): ");
-                                                        int score = selectMenuOption(1, Int32.Parse(tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0]));
+                                                        int score = await selectMenuOption(1, Int32.Parse(tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0])).ConfigureAwait(false);
                                                         server.scoreStudent(courseName,taskName, studentNumber, score);
                                                         Console.ForegroundColor = ConsoleColor.Green;
                                                         Console.WriteLine("Estudiante calificado con éxito.");
@@ -243,7 +258,7 @@ namespace ServerConsole
             }
         }
 
-        private static List<string> getStudentsToCorrect(string course, string task)
+        private static async Task<List<string>> getStudentsToCorrect(string course, string task)
         {
             List<string> students = server.getStudentsToCorrect(course,task);
             for (int i = 0; i < students.Count; i++)
@@ -253,7 +268,7 @@ namespace ServerConsole
             return students;
         }
 
-        private static List<string> getTasksToCorrect(string course)
+        private static async Task<List<string>> getTasksToCorrect(string course)
         {
             List<string> tasks = server.getTasksToCorrect(course);
             for (int i = 0; i < tasks.Count; i++)
@@ -264,7 +279,7 @@ namespace ServerConsole
             return tasks;
         }
 
-        private static List<string> getCoursesWithTasks()
+        private static async Task<List<string>> getCoursesWithTasks()
         {
             List<string> courses = server.getCoursesWithTasks();
             if (courses.Count > 0)
@@ -283,7 +298,7 @@ namespace ServerConsole
             return courses;
         }
 
-        private static List<string> getCoursesWithTasksToCorrect()
+        private static async Task<List<string>> getCoursesWithTasksToCorrect()
         {
             List<string> courses = server.getCoursesWithTasksToCorrect();
             if (courses.Count > 0)
@@ -296,7 +311,7 @@ namespace ServerConsole
             return courses;
         }
 
-        private static List<string> getPosibleCoursesToAddTask()
+        private static async Task<List<string>> getPosibleCoursesToAddTask()
         {
             List<string> courses = server.getPosibleCoursesToAddTask();
             for (int i = 0; i < courses.Count; i++)
@@ -306,7 +321,7 @@ namespace ServerConsole
             return courses;
         }
 
-        private static List<string> getCoursesListAtString()
+        private static async Task<List<string>> getCoursesListAtString()
         {
             List<string> courses = server.getCousesAtString();
             for (int i = 0; i < courses.Count; i++)
@@ -316,7 +331,7 @@ namespace ServerConsole
             return courses;
         }
 
-        private static int selectMenuOption(int minOption, int maxOption)
+        private static async Task<int> selectMenuOption(int minOption, int maxOption)
         {
             int option = 0;
             while (!(option >= minOption && option <= maxOption))
@@ -336,7 +351,7 @@ namespace ServerConsole
             return option;
         }
 
-        private static void showMenu(string menuPath)
+        private static async Task showMenu(string menuPath)
         {
             Console.Clear();
             Console.WriteLine(File.ReadAllText(menuPath));

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Reflection;
 using Domain;
-using System.Web.Script.Serialization;
-using System.Threading;
 using System.IO;
+using System.Threading.Tasks;
+using Communication.Protocol;
+using Communication.TcpSockets;
 
 namespace RouteController
 {
@@ -23,14 +23,18 @@ namespace RouteController
         GetSuscribedCoursesWithTasks,
         GetCourseTasks,
         UpdateTaskToCourse,
-        GetNotifications
+        GetNotifications,
+        Logout,
+        GetCalifications
     }
 
     public class ActionDispatcher
     {
         private static Dictionary<Action, string> actionDispatcher = new Dictionary<Action, string>() {
             {Action.Login, "Login"},
+            {Action.Logout, "Logout"},
             {Action.GetCourses, "GetCourses"},
+            {Action.GetCalifications, "GetCalifications"},
             {Action.GetNotSuscribedCourses, "GetNotSuscribedCourses"},
             {Action.GetSuscribedCourses, "GetSuscribedCourses"},
             {Action.GetSuscribedCoursesWithTasks, "GetSuscribedCoursesWithTasks"},
@@ -40,240 +44,39 @@ namespace RouteController
             {Action.Unsuscribe, "Unsuscribe"},
             {Action.UpdateTaskToCourse, "UpdateTaskToCourse"}
         };
-        private List<Admin> admins;
-        private List<Student> students;
-        private List<Tuple<Student,string>> notifications;
-        private List<Course> courses;
-        private int lastStudentRegistered = 200000;
-        static readonly object _locker = new object();
-        static readonly object _lockerCourse = new object();
 
         public ActionDispatcher()
         {
-            this.students = new List<Student>();
-            this.courses = new List<Course>();
-            this.notifications = new List<Tuple<Student, string>>();
-            this.admins = new List<Admin>();
-            this.admins.Add(new Admin()); 
         }
 
-        public void dispatch(Action action, string data, NetworkStream networkStream)
+        public async Task dispatch(Action action, string data, TcpClient tcpClient)
         {
             string actionString;
+            var tcpWriter = new WriteTcpSockets(tcpClient);
             if (actionDispatcher.TryGetValue(action, out actionString))
             {
                 Type type = typeof(ActionDispatcher);
                 MethodInfo method = type.GetMethod(actionString);
-                method.Invoke(this, new object[] {data, networkStream });
+                method.Invoke(this, new object[] { data, tcpWriter });
             }
             else
             {
                 throw new Exception("Action not defined.");
             }
-
-
         }
 
-        public bool LoginUser(int studentNumber, string pass)
-        {
-            User user;
-            Student studentLog;
-            
-            user = new User() { Password = pass };
-            studentLog = new Student() { User = user, Number = studentNumber };
-
-            lock(_locker){
-                if (this.students.Contains(studentLog))
-                {
-                    Student currentStudent = this.students.Find(x => x.Equals(studentLog));
-                    return (currentStudent.User.Password == pass);
-                }
-            }
-            return false;
-        }
-
-        public void addCourse(string newCourse)
-        {
-            Course course = new Course() { Name = newCourse };
-
-            lock (_lockerCourse)
-            {
-                this.courses.Add(course);
-            }
-        }
-
-        public void removeCourse(int removeCourse)
-        {
-            lock (_lockerCourse)
-            {
-                this.courses.RemoveAt(removeCourse);
-            }
-        }
-
-        public List<string> getCousesAtString()
-        {
-            List<string> coursesAtString = new List<string>();
-            foreach(Course course in courses)
-            {
-                coursesAtString.Add(course.ToString());
-            }
-            return coursesAtString;
-        }
-
-        public List<string> getTasksToCorrect(string course)
-        {
-            List<string> tasksAtString = new List<string>();
-            var tasks = courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x=>x.Item2.Item2.Item2 == 0).Select(x=>x.Item1);
-            foreach (Domain.Task task in tasks)
-            {
-                if (!tasksAtString.Contains(task.ToString()))
-                {
-                    tasksAtString.Add(task.ToString());
-                }
-            }
-            return tasksAtString;
-        }
-
-        public void scoreStudent(string courseName, string taskName, int studentNumber, int score)
-        {
-            Course course = courses.Find(x => x.Name.Equals(courseName));
-            Student student = this.students.Find(x => x.Number == studentNumber);
-            course.RemoveStudentTask(taskName, studentNumber);
-            course.AddScoreToTask(taskName, studentNumber, score);
-            string newNotifications = "";
-            if (notifications.Where(x => x.Item1.Number == studentNumber).Count() > 0)
-            {
-                newNotifications = notifications.Find(x => x.Item1.Number == studentNumber).Item2;
-                newNotifications += ";Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
-            }
-            else
-            {
-                newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
-            }
-            this.notifications = new List<Tuple<Student, string>> (this.notifications.Where(x => x.Item1.Number != studentNumber));
-            this.notifications.Add(new Tuple<Student, string>(student, newNotifications));
-        }
-
-        public List<string> getStudentsToCorrect(string course, string task)
-        {
-            List<string> studentsToCorrect = new List<string>();
-            var students = courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x => x.Item1.TaskName.Equals(task)).Select(x=>x.Item2);
-            foreach (var student in students)
-            {
-                studentsToCorrect.Add(student.Item1.ToString());
-            }
-            return studentsToCorrect;
-        }
-
-        public List<string> getCoursesWithTasksToCorrect()
-        {
-            List<string> coursesWithTasksToCorrect = new List<string>();
-
-            foreach (Course course in courses)
-            {
-                if (course.StudentTasks.Where(x=>x.Item2.Item2.Item2 == 0).Count() > 0)
-                {
-                    string courseWithTasks = course.ToString() + "&";
-
-                    foreach (Domain.Task task in course.Tasks)
-                    {
-                        if(course.StudentTasks.Where(x=>x.Item1.TaskName.Equals(task.TaskName)&&x.Item2.Item2.Item2==0).Count() > 0)
-                        {
-                            courseWithTasks += task.ToString() + ",";
-                        }
-                    }
-                    courseWithTasks = courseWithTasks.Remove(courseWithTasks.Count() - 1);
-                    coursesWithTasksToCorrect.Add(courseWithTasks);
-                }
-            }
-            return coursesWithTasksToCorrect;
-        }
-
-        public List<string> getCoursesWithTasks()
-        {
-            List<string> coursesWithTask = new List<string>();
-
-            foreach (Course course in courses)
-            {
-                if (course.Tasks.Count > 0)
-                {
-                    string courseWithTasks = course.ToString() + "&";
-                    foreach (Domain.Task task in course.Tasks)
-                    {
-                        courseWithTasks += task.ToString() + ",";
-                    }
-                    courseWithTasks = courseWithTasks.Remove(courseWithTasks.Count() - 1);
-                    coursesWithTask.Add(courseWithTasks);
-                }
-            }
-            return coursesWithTask;
-        }
-
-        public void AddTask(string courseName, string taskName, int taskScore)
-        {
-            Course course = this.courses.Find(x => x.Name.Equals(courseName));
-            Domain.Task taskToAdd = new Domain.Task() { TaskName = taskName, MaxScore = taskScore };
-            course.Tasks.Add(taskToAdd);
-            course.totalTaskScore = course.totalTaskScore + taskScore;
-        }
-
-        public List<string> getPosibleCoursesToAddTask()
-        {
-            List<string> coursesWithNote = new List<string>();
-            foreach (Course course in courses)
-            {
-                if(course.totalTaskScore < 100)
-                {
-                    coursesWithNote.Add(course.ToString() + "&" + (100 - course.totalTaskScore));
-                }
-            }
-            return coursesWithNote;
-        }
-
-        public bool LoginAdmin(string username, string pass)
-        {
-            User user = new User() { Email = username, Password = pass };
-            Admin adminLog = new Admin() { User = user };
-
-            lock (_locker)
-            {
-                if (this.admins.Contains(adminLog))
-                {
-                    Admin currentAdmin = this.admins.Find(x => x.Equals(adminLog));
-                    return (currentAdmin.User.Password == pass);
-                }
-
-            }
-            return false;
-        }
-
-        public bool addStudent(string studentUsername, string studentPass)
-        {
-            User studentUser = new User() { Email = studentUsername, Password = studentPass };
-
-            lock (_locker)
-            {
-                if (!this.students.Contains(new Student() { User = studentUser }))
-                {
-                    this.students.Add(new Student() { User = studentUser, Number = this.lastStudentRegistered++ });
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private void sendData(Action action, string payload, NetworkStream networkStream)
+        private async Task sendData(Action action, string payload, WriteTcpSockets networkStream)
         {
             var actionInBit = BitConverter.GetBytes((int)action);
             var messageInBytes = Encoding.UTF8.GetBytes(payload);
             var lengthOfDataInBytes = BitConverter.GetBytes(messageInBytes.Length);
 
-            networkStream.Write(actionInBit, 0, actionInBit.Length);
-            networkStream.Write(lengthOfDataInBytes, 0, lengthOfDataInBytes.Length);
-            networkStream.Write(messageInBytes, 0, messageInBytes.Length);
+            await networkStream.WriteDataAsync(actionInBit);
+            await networkStream.WriteDataAsync(lengthOfDataInBytes);
+            await networkStream.WriteDataAsync(messageInBytes);
         }
 
-        public void Login(string data, NetworkStream networkStream)
+        public async Task Login(string data, WriteTcpSockets networkStream)
         {
             var dataArray = data.Split('&');
             int studentNumber;
@@ -290,20 +93,38 @@ namespace RouteController
 
             if (LoginUser(studentNumber, studentPw))
             {
-                sendData(Action.Response, "T&" + studentNumber, networkStream);
+                Student studentLogged = new Student() { Number = studentNumber, User = new User() };
+                if (!IsAlreadyLogged(studentLogged))
+                {
+                    AddStudentLogged(studentLogged);
+                    await sendData(Action.Response, "T&" + studentNumber, networkStream);
+                }else
+                {
+                    await sendData(Action.Response, "L", networkStream);
+                }
             }
             else
             {
-                sendData(Action.Response, "F", networkStream);
+                await sendData(Action.Response, "F", networkStream);
             }
 
+        }
+
+        private void AddStudentLogged(Student student)
+        {
+            DataSystem.Instance.AddStudentLogged(DataSystem.Instance.GetStudent(student));
+        }
+
+        private bool IsAlreadyLogged(Student student)
+        {
+            return DataSystem.Instance.IsStudentLogged(student);
         }
 
         private int GetStudentNumberByEmail(string studentEmail)
         {
             try
             {
-                return this.students.Find(x => x.User.Email.Equals(studentEmail)).Number;
+                return DataSystem.Instance.Students.Find(x => x.User.Email.Equals(studentEmail)).Number;
             }
             catch
             {
@@ -311,80 +132,95 @@ namespace RouteController
             }
         }
 
-        public void Suscribe(string data, NetworkStream networkStream)
+        public bool LoginUser(int studentNumber, string pass)
+        {
+            User user = new User() { Password = pass }; ;
+            Student studentLog = new Student() { User = user, Number = studentNumber };
+
+            try {
+                Student currentStudent = DataSystem.Instance.Students.Find(x => x.Number == studentNumber);
+                return (currentStudent.User.Password.Equals(pass));
+            }catch
+            {
+                return false;
+            }
+        }
+
+        public void Suscribe(string data, WriteTcpSockets networkStream)
         {
             var dataArray = data.Split('&');
-            Course course = this.courses.Find(x => x.Name.Equals(dataArray[0]));
-            Student student = new Student() { Number = Int32.Parse(dataArray[1]) };
+            Course course = DataSystem.Instance.Courses.Find(x => x.Name.Equals(dataArray[0]));
+            Student student = new Student() { Number = Int32.Parse(dataArray[1]) , User = new User()};
             if (!course.Students.Select(x=>x.Item1).Contains(student))
             {
-                Student studentSub = this.students.Find(x => x.Equals(student));
+                Student studentSub = DataSystem.Instance.Students.Find(x => x.Equals(student));
                 course.Students.Add(new Tuple<Student, int>(studentSub, 0));
             }
         }
 
-        public void Unsuscribe(string data, NetworkStream networkStream)
+        public void Unsuscribe(string data, WriteTcpSockets networkStream)
         {
             var dataArray = data.Split('&');
-            Course course = this.courses.Find(x => x.Name.Equals(dataArray[0]));
-            Student student = new Student() { Number = Int32.Parse(dataArray[1]) };
+            Course course = DataSystem.Instance.Courses.Find(x => x.Name.Equals(dataArray[0]));
+            Student student = new Student() { Number = Int32.Parse(dataArray[1]) , User = new User()};
             if (course.Students.Select(x => x.Item1).Contains(student))
             {
-                Student studentUnsub = this.students.Find(x => x.Equals(student));
+                Student studentUnsub = DataSystem.Instance.Students.Find(x => x.Equals(student));
                 course.Students.Remove(course.Students.Find(x => x.Item1.Equals(studentUnsub)));
             }
         }
 
-        public void GetCourses(string data, NetworkStream networkStream) {
+        public async Task GetCourses(string data, WriteTcpSockets networkStream) {
             int studentNumber = Int32.Parse(data);
-            Student student = this.students.Find(x => x.Number == studentNumber);
-            string coursesString = string.Join(",", this.courses.Select(x=>x.GetList(student)));
-            sendData(Action.Response, coursesString, networkStream);
+            Student student = DataSystem.Instance.Students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", DataSystem.Instance.Courses.Select(x=>x.GetList(student)));
+            await sendData(Action.Response, coursesString, networkStream);
         }
 
-        public void GetNotSuscribedCourses(string data, NetworkStream networkStream)
+        public async Task GetNotSuscribedCourses(string data, WriteTcpSockets networkStream)
         {
             int studentNumber = Int32.Parse(data);
-            Student student = this.students.Find(x => x.Number == studentNumber);
-            string coursesString = string.Join(",", this.courses.Where(x => !x.Students.Select(y=>y.Item1).Contains(student)).Select(x=>x.ToString()));
-            sendData(Action.Response, coursesString, networkStream);
+            Student student = DataSystem.Instance.Students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", DataSystem.Instance.Courses.Where(x => !x.Students.Select(y=>y.Item1).Contains(student)).Select(x=>x.ToString()));
+            await sendData(Action.Response, coursesString, networkStream);
         }
 
-        public void GetSuscribedCourses(string data, NetworkStream networkStream)
+        public async Task GetSuscribedCourses(string data, WriteTcpSockets networkStream)
         {
             int studentNumber = Int32.Parse(data);
-            Student student = this.students.Find(x => x.Number == studentNumber);
-            string coursesString = string.Join(",", this.courses.Where(x => x.Students.Select(y => y.Item1).Contains(student)).Select(x => x.ToString()));
-            sendData(Action.Response, coursesString, networkStream);
+            Student student = DataSystem.Instance.Students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", DataSystem.Instance.Courses.Where(x => x.Students.Select(y => y.Item1).Contains(student)).Select(x => x.ToString()));
+            await sendData(Action.Response, coursesString, networkStream);
         }
 
-        public void GetSuscribedCoursesWithTasks(string data, NetworkStream networkStream)
+        public async Task GetSuscribedCoursesWithTasks(string data, WriteTcpSockets networkStream)
         {
             int studentNumber = Int32.Parse(data);
-            Student student = this.students.Find(x => x.Number == studentNumber);
-            string coursesString = string.Join(",", this.courses.Where(x => x.Students.Select(y => y.Item1).Contains(student) && x.Tasks.Count > 0).Select(x => x.ToString()));
-            sendData(Action.Response, coursesString, networkStream);
+            Student student = DataSystem.Instance.Students.Find(x => x.Number == studentNumber);
+            string coursesString = string.Join(",", DataSystem.Instance.Courses.Where(x => x.Students.Select(y => y.Item1).Contains(student) && x.Tasks.Count > 0).Select(x => x.ToString()));
+            await sendData(Action.Response, coursesString, networkStream);
         }
 
-        public void GetCourseTasks(string data, NetworkStream networkStream)
+        public async Task GetCourseTasks(string data, WriteTcpSockets networkStream)
         {
             string courseName = data;
-            Course course = this.courses.Find(x => x.Name == courseName);
+            Course course = DataSystem.Instance.Courses.Find(x => x.Name == courseName);
             string tasksString = string.Join(",", course.Tasks.Select(x => x.ToString()));
-            sendData(Action.Response, tasksString, networkStream);
+            await sendData(Action.Response, tasksString, networkStream);
         }
 
-        public void GetNotifications(string data, NetworkStream networkStream)
+        public async Task GetNotifications(string data, WriteTcpSockets networkStream)
         {
             string studentNotifications = "";
-            if (this.notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
+            if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number.ToString().Equals(data)).Count() > 0)
             {
-                studentNotifications = this.notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
+                studentNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number.ToString().Equals(data)).Item2;
+                DataSystem.Instance.Notifications = new List<Tuple<Student,string>>(DataSystem.Instance.Notifications.Where(x => !x.Item1.Number.ToString().Equals(data)));
             }
-            sendData(Action.Response, studentNotifications, networkStream);
+            await sendData(Action.Response, studentNotifications, networkStream);
         }
 
-        public void UpdateTaskToCourse(string data, NetworkStream networkStream)
+        public async Task UpdateTaskToCourse(string data, WriteTcpSockets networkStream)
         {
             int totalToRemove = 0;
             string courseName = data.Split('&')[0];
@@ -398,44 +234,68 @@ namespace RouteController
             string extension = data.Split('&')[3];
             totalToRemove += extension.Length + 1;
             string fileTask = data.Remove(0, totalToRemove);
-            char[] fileTaskInChar = StringAChar(fileTask);
-            byte[] fileTaskInBytes = new byte[fileTaskInChar.Length];
-            for (int i = 0; i < fileTaskInChar.Length; i++)
-            {
-                fileTaskInBytes[i] = (byte)fileTaskInChar[i];
-            }
+            byte[] fileTaskInBytes = Convert.FromBase64String(fileTask);
 
-            string taskPath = "./"+ courseName + "-" + studentNumber + "-" + taskName + "-" + extension;
+            string taskPath = "./"+ courseName + "-" + studentNumber + "-" + taskName + extension;
 
             try
             {
-                File.WriteAllBytes(taskPath, fileTaskInBytes);
-                Course course = this.courses.Find(x => x.Name.Equals(courseName));
+                using (FileStream fs = new FileStream(taskPath, FileMode.Create))
+                {
+                    if (fs.CanWrite)
+                    {
+                        await fs.WriteAsync(fileTaskInBytes, 0, fileTaskInBytes.Length).ConfigureAwait(false);
+                    }
+                }
+                Course course = DataSystem.Instance.Courses.Find(x => x.Name.Equals(courseName));
                 Student student = course.Students.Find(x => x.Item1.Number == studentNumber).Item1;
-                Domain.Task task = course.Tasks.Find(x => x.TaskName.Equals(taskName));
+                Domain.StudentTask task = course.Tasks.Find(x => x.TaskName.Equals(taskName));
                 Tuple<string, int> pathScore = new Tuple<string, int>(taskPath, 0);
                 Tuple<Student, Tuple<string, int>> studentPathScore = new Tuple<Student, Tuple<string, int>>(student, pathScore);
-                Tuple< Domain.Task,Tuple <Student, Tuple<string, int>>> taskStutendPathScore = new Tuple<Domain.Task,Tuple<Student, Tuple<string, int>>>(task, studentPathScore);
+                Tuple<Domain.StudentTask, Tuple<Student, Tuple<string, int>>> taskStutendPathScore = new Tuple<Domain.StudentTask, Tuple<Student, Tuple<string, int>>>(task, studentPathScore);
                 course.StudentTasks.Add(taskStutendPathScore);
-
-                sendData(Action.Response, "T", networkStream);
+                await sendData(Action.Response, "T", networkStream);
             }
             catch
             {
-                sendData(Action.Response, "F", networkStream);
+                await sendData(Action.Response, "F", networkStream);
             }
             
         }
-        private char[] StringAChar(string str)
+
+        public async Task  GetCalifications(string data, WriteTcpSockets networkStream)
         {
-            char[] result = new char[str.Length];
-            for (int i = 0; i < str.Length; i++)
+            int studentNumber = Int32.Parse(data);
+            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber , User = new User()});
+            List<Course> studentCourses = DataSystem.Instance.GetStudentCourses(student);
+            string califications = "";
+            foreach (Course course in studentCourses)
             {
-                result[i] = str[i];
+                string studentCourseCalification = course.GetStudentCalification(student);
+                califications += course.ToString() + " - Calificación: " + studentCourseCalification + "/100&";
+                List<Domain.StudentTask> tasks = course.GetTasks();
+                foreach(Domain.StudentTask task in tasks)
+                {
+                    string studentTaskCalification = course.GetStudentTaskCalification(task,student);
+                    califications += task.ToString() + " - Calificación: " + studentTaskCalification + ";";
+                }
+                if(tasks.Count() > 0)
+                {
+                    califications = califications.Remove(califications.Count() - 1);
+                }
+                califications += "$";
             }
-            return result;
+            if (studentCourses.Count() > 0)
+            {
+                califications = califications.Remove(califications.Count() - 1);
+            }
+            await sendData(Action.Response, califications, networkStream);
+        }
+
+        public void Logout(string data, WriteTcpSockets networkStream)
+        {
+            var studentNumber = Int32.Parse(data);
+            DataSystem.Instance.RemoveStudentLogged(new Student() { Number = studentNumber, User = new User()});
         }
     }
-
-    
 }

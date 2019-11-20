@@ -11,6 +11,8 @@ namespace Domain
         public User User { get; set; }
         public int Number { get; set; }
 
+        public static int LastStudentRegistered { get; set; } = 200000;
+
         public override string ToString()
         {
             return Number + " (" + User.Email + ")";  

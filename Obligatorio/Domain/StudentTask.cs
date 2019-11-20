@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Domain
 {
-    public class Task
+    public class StudentTask
     {
         public string TaskName { get; set; }
         public int MaxScore { get; set; }
 
         public override bool Equals(object obj)
         {
-            return this.TaskName.Equals(((Task)obj).TaskName);
+            return this.TaskName.Equals(((StudentTask)obj).TaskName);
         }
         public override string ToString()
         {
