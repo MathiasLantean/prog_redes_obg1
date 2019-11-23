@@ -16,12 +16,14 @@ namespace Domain
         public List<Student> StudentsLogged { get; }
         public List<Tuple<Student, string>> Notifications { get; set; }
         public List<Course> Courses { get; }
+        public List<Teacher> Teachers { get; }
 
         private static readonly object adminsLock= new object();
         private static readonly object studentslock = new object();
         private static readonly object courseslock = new object();
         private static readonly object notificationslock = new object();
         private static readonly object studentloggedlock = new object();
+        private static readonly object teacherslock = new object();
 
         private DataSystem()
         {
@@ -30,6 +32,7 @@ namespace Domain
             this.Courses = new List<Course>();
             this.Notifications = new List<Tuple<Student, string>>();
             this.Admins = new List<Admin>();
+            this.Teachers = new List<Teacher>();
             this.Admins.Add(new Admin());
         }
 
@@ -57,6 +60,22 @@ namespace Domain
                     Admin currentAdmin = this.Admins. Find(x =>x.Equals(adminToLogin));
                     return currentAdmin.User.Password == adminToLogin.User.Password;
                 }catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        public bool CheckTeacherPassword(Teacher teacherToLogin)
+        {
+            lock (teacherslock)
+            {
+                try
+                {
+                    Teacher currentTeacher = this.Teachers.Find(x => x.Equals(teacherToLogin));
+                    return currentTeacher.User.Password == teacherToLogin.User.Password;
+                }
+                catch
                 {
                     return false;
                 }
@@ -101,6 +120,37 @@ namespace Domain
             }
         }
 
+        public Teacher AddTeacher(Teacher teacher)
+        {
+
+            lock (teacherslock)
+            {
+                if (!this.Teachers.Contains(teacher))
+                {
+                    this.Teachers.Add(teacher);
+                    return teacher;
+                }
+                else
+                {
+                    throw new ArgumentException("Ya existe un profesor con ese correo electrónico.");
+                }
+            }
+        }
+
+        public Teacher GetTeacher(Teacher teacher)
+        {
+            lock (teacherslock)
+            {
+                if (this.Teachers.Exists(x => x.Equals(teacher)))
+                {
+                    return this.Teachers.Find(x => x.Equals(teacher));
+                }
+                else
+                {
+                    throw new ArgumentException("No existe un profesor con ese correo electrónico.");
+                }
+            }
+        }
 
         public Course GetCourse(Course courseToFind)
         {

@@ -12,14 +12,19 @@ using Domain;
 using System.Threading.Tasks;
 using Communication.Protocol;
 using Communication.TcpSockets;
+using RemotingServiceInterface;
+using System.Runtime.Remoting;
+using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Remoting.Channels;
 
 namespace ServerLogic
 {
-    public class Server
+    public class Server : IRemotingService
     {
 
         private DataSystem data = DataSystem.Instance;
         private static TcpListener _tcpListener;
+        private TcpChannel remotingChannel;
 
         public async Task Start(bool _isServerRunning)
         {
@@ -28,9 +33,14 @@ namespace ServerLogic
                 var appSettings = ConfigurationManager.AppSettings;
                 IPAddress serverIpAddress = IPAddress.Parse(appSettings["ServerIpAddress"]);
                 int serverPort = Int32.Parse(appSettings["ServerPort"]);
+                int remotingPort = Int32.Parse(appSettings["RemotingPort"]);
+                string remotingUri = appSettings["RemotingUri"].ToString();
 
                 _tcpListener = new TcpListener(serverIpAddress, serverPort);
                 _tcpListener.Start(100);
+
+                InitRemoting(remotingPort, remotingUri);
+
                 while (_isServerRunning)
                 {
                     try
@@ -53,6 +63,16 @@ namespace ServerLogic
             {
                 throw new Exception("Server IP o puerto invalido.");
             }
+        }
+
+        private void InitRemoting(int port, string uri)
+        {
+            remotingChannel = new TcpChannel(port);
+            ChannelServices.RegisterChannel(remotingChannel, false);
+            RemotingConfiguration.RegisterWellKnownServiceType(
+                typeof(Server),
+                uri,
+                WellKnownObjectMode.SingleCall);
         }
 
         private async Task ActionDespatcher(TcpClient tcpClient, ActionDispatcher route)
@@ -96,7 +116,7 @@ namespace ServerLogic
             User user = new User() { Email = username, Password = pass };
             Admin adminLog = new Admin() { User = user };
             return DataSystem.Instance.CheckAdminPassword(adminLog);
-    }
+        }
 
         public bool addStudent(string studentUsername, string studentPass)
         {
@@ -167,7 +187,7 @@ namespace ServerLogic
             return coursesWithTask;
         }
 
-        public List<string> getCoursesWithTasksToCorrect()
+        public List<string> GetCoursesWithTasksToCorrect()
         {
             List<string> coursesWithTasksToCorrect = new List<string>();
 
@@ -191,7 +211,7 @@ namespace ServerLogic
             return coursesWithTasksToCorrect;
         }
 
-        public List<string> getTasksToCorrect(string course)
+        public List<string> GetTasksToCorrect(string course)
         {
             List<string> tasksAtString = new List<string>();
             var tasks = DataSystem.Instance.Courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x => x.Item2.Item2.Item2 == 0).Select(x => x.Item1);
@@ -205,7 +225,7 @@ namespace ServerLogic
             return tasksAtString;
         }
 
-        public List<string> getStudentsToCorrect(string course, string task)
+        public List<string> GetStudentsToCorrect(string course, string task)
         {
             List<string> studentsToCorrect = new List<string>();
             var students = DataSystem.Instance.Courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x => x.Item1.TaskName.Equals(task)).Select(x => x.Item2);
@@ -216,7 +236,29 @@ namespace ServerLogic
             return studentsToCorrect;
         }
 
-        public void scoreStudent(string courseName, string taskName, int studentNumber, int score)
+        public Teacher GetTeacher(string email)
+        {
+            try
+            {
+                return DataSystem.Instance.GetTeacher(new Teacher() { User = new User() { Email = email } });
+            }catch(ArgumentException e)
+            {
+                throw e;
+            }
+        }
+
+        public Teacher AddTeacher(Teacher teacher)
+        {
+            try
+            {
+                return DataSystem.Instance.AddTeacher(teacher);
+            }catch(ArgumentException e)
+            {
+                throw e;
+            }
+        }
+
+        public void ScoreStudent(string courseName, string taskName, int studentNumber, int score)
         {
             Course course = DataSystem.Instance.GetCourse(new Course() { Name = courseName});
             Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber , User = new User()});
@@ -233,6 +275,13 @@ namespace ServerLogic
                 newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
             }
             DataSystem.Instance.CreateNotification(student, newNotifications);
+        }
+
+        public bool TeacherLogin(string mail, string password)
+        {
+            User user = new User() { Email = mail, Password = password };
+            Teacher teacherLog = new Teacher() { User = user };
+            return DataSystem.Instance.CheckTeacherPassword(teacherLog);
         }
     }
 }

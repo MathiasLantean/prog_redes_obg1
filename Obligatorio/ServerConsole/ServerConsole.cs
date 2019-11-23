@@ -22,7 +22,9 @@ namespace ServerConsole
         public static async Task Main(string[] args)
         {
             _isServerRunning = true;
+
             await Task.Run(() => startServer().ConfigureAwait(false));
+
             await mainManuAdmin().ConfigureAwait(false);
             Console.Read();
         }
@@ -224,7 +226,7 @@ namespace ServerConsole
                                                         int studentNumber = Int32.Parse(studentsToCorrect[studentToCorrect - 1].Split(' ')[0]);
                                                         Console.WriteLine("Ingrese la nota(1-"+ tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0] + "): ");
                                                         int score = await selectMenuOption(1, Int32.Parse(tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0])).ConfigureAwait(false);
-                                                        server.scoreStudent(courseName,taskName, studentNumber, score);
+                                                        server.ScoreStudent(courseName,taskName, studentNumber, score);
                                                         Console.ForegroundColor = ConsoleColor.Green;
                                                         Console.WriteLine("Estudiante calificado con éxito.");
                                                         Console.ResetColor();
@@ -260,7 +262,7 @@ namespace ServerConsole
 
         private static async Task<List<string>> getStudentsToCorrect(string course, string task)
         {
-            List<string> students = server.getStudentsToCorrect(course,task);
+            List<string> students = server.GetStudentsToCorrect(course,task);
             for (int i = 0; i < students.Count; i++)
             {
                 Console.WriteLine((i + 1) + ") " + students[i]);
@@ -270,7 +272,7 @@ namespace ServerConsole
 
         private static async Task<List<string>> getTasksToCorrect(string course)
         {
-            List<string> tasks = server.getTasksToCorrect(course);
+            List<string> tasks = server.GetTasksToCorrect(course);
             for (int i = 0; i < tasks.Count; i++)
             {
                 string task = tasks[i];
@@ -300,7 +302,7 @@ namespace ServerConsole
 
         private static async Task<List<string>> getCoursesWithTasksToCorrect()
         {
-            List<string> courses = server.getCoursesWithTasksToCorrect();
+            List<string> courses = server.GetCoursesWithTasksToCorrect();
             if (courses.Count > 0)
             {
                 for (int i = 0; i < courses.Count; i++)
