@@ -41,10 +41,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ILogService.cs" />
     <Compile Include="IRemotingService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemotingModels\RCourse.cs" />
     <Compile Include="RemotingModels\RStudent.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj">
+      <Project>{26E1821F-C4BE-4EC1-B82E-DD6AD314D663}</Project>
+      <Name>Domain</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

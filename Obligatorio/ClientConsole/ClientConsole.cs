@@ -22,7 +22,13 @@ namespace ClientConsole
 
         static async Task Main(string[] args)
         {
-            await MainMenu().ConfigureAwait(false);
+            try
+            {
+                await MainMenu().ConfigureAwait(false);
+            }catch(Exception e)
+            {
+
+            }
         }
 
         private static async Task MainMenu()

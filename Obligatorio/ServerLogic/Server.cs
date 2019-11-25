@@ -19,7 +19,7 @@ using System.Runtime.Remoting.Channels;
 
 namespace ServerLogic
 {
-    public class Server : IRemotingService
+    public class Server : MarshalByRefObject, IRemotingService, ILogService
     {
 
         private DataSystem data = DataSystem.Instance;
@@ -111,7 +111,7 @@ namespace ServerLogic
             }
             totalRecivedData = 0;
         }
-        public bool LoginAdmin(string username, string pass)
+        public Guid LoginAdmin(string username, string pass)
         {
             User user = new User() { Email = username, Password = pass };
             Admin adminLog = new Admin() { User = user };
@@ -187,40 +187,50 @@ namespace ServerLogic
             return coursesWithTask;
         }
 
-        public List<string> GetCoursesWithTasksToCorrect()
+        public List<string> GetCoursesWithTasksToCorrect(Guid token)
         {
-            List<string> coursesWithTasksToCorrect = new List<string>();
-
-            foreach (Course course in DataSystem.Instance.Courses)
+            if (DataSystem.Instance.ExistToken(token))
             {
-                if (course.StudentTasks.Where(x => x.Item2.Item2.Item2 == 0).Count() > 0)
-                {
-                    string courseWithTasks = course.ToString() + "&";
+                List<string> coursesWithTasksToCorrect = new List<string>();
 
-                    foreach (Domain.StudentTask task in course.Tasks)
+                foreach (Course course in DataSystem.Instance.Courses)
+                {
+                    if (course.StudentTasks.Where(x => x.Item2.Item2.Item2 == 0).Count() > 0)
                     {
-                        if (course.StudentTasks.Where(x => x.Item1.TaskName.Equals(task.TaskName) && x.Item2.Item2.Item2 == 0).Count() > 0)
+                        string courseWithTasks = course.ToString() + "&";
+
+                        foreach (Domain.StudentTask task in course.Tasks)
                         {
-                            courseWithTasks += task.ToString() + ",";
+                            if (course.StudentTasks.Where(x => x.Item1.TaskName.Equals(task.TaskName) && x.Item2.Item2.Item2 == 0).Count() > 0)
+                            {
+                                courseWithTasks += task.ToString() + ",";
+                            }
                         }
+                        courseWithTasks = courseWithTasks.Remove(courseWithTasks.Count() - 1);
+                        coursesWithTasksToCorrect.Add(courseWithTasks);
                     }
-                    courseWithTasks = courseWithTasks.Remove(courseWithTasks.Count() - 1);
-                    coursesWithTasksToCorrect.Add(courseWithTasks);
                 }
+                return coursesWithTasksToCorrect;
             }
-            return coursesWithTasksToCorrect;
+            else
+            {
+                throw new ArgumentException("No tienes los permisos para realizar esta operación.");
+            }
         }
 
         public List<string> GetTasksToCorrect(string course)
         {
             List<string> tasksAtString = new List<string>();
-            var tasks = DataSystem.Instance.Courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x => x.Item2.Item2.Item2 == 0).Select(x => x.Item1);
+            if (DataSystem.Instance.Courses.Exists(x => x.Name.Equals(course)))
+            {
+                var tasks = DataSystem.Instance.Courses.Find(x => x.Name.Equals(course)).StudentTasks.Where(x => x.Item2.Item2.Item2 == 0).Select(x => x.Item1);
             foreach (Domain.StudentTask task in tasks)
             {
                 if (!tasksAtString.Contains(task.ToString()))
                 {
                     tasksAtString.Add(task.ToString());
                 }
+            }
             }
             return tasksAtString;
         }
@@ -240,7 +250,7 @@ namespace ServerLogic
         {
             try
             {
-                return DataSystem.Instance.GetTeacher(new Teacher() { User = new User() { Email = email } });
+                return DataSystem.Instance.GetTeacher(new Teacher() { User = new User() { Email = (email+"@mail.com") } });
             }catch(ArgumentException e)
             {
                 throw e;
@@ -258,30 +268,47 @@ namespace ServerLogic
             }
         }
 
-        public void ScoreStudent(string courseName, string taskName, int studentNumber, int score)
+        public void ScoreStudent(Guid token, string courseName, string taskName, int studentNumber, int score)
         {
-            Course course = DataSystem.Instance.GetCourse(new Course() { Name = courseName});
-            Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber , User = new User()});
-            course.RemoveStudentTask(taskName, studentNumber);
-            course.AddScoreToTask(taskName, studentNumber, score);
-            string newNotifications = "";
-            if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number == studentNumber).Count() > 0)
+            if (DataSystem.Instance.ExistToken(token))
             {
-                newNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number == studentNumber).Item2;
-                newNotifications += ";Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+                Course course = DataSystem.Instance.GetCourse(new Course() { Name = courseName });
+                Student student = DataSystem.Instance.GetStudent(new Student() { Number = studentNumber, User = new User() });
+                course.RemoveStudentTask(taskName, studentNumber);
+                course.AddScoreToTask(taskName, studentNumber, score);
+                string newNotifications = "";
+                if (DataSystem.Instance.Notifications.Where(x => x.Item1.Number == studentNumber).Count() > 0)
+                {
+                    newNotifications = DataSystem.Instance.Notifications.Find(x => x.Item1.Number == studentNumber).Item2;
+                    newNotifications += ";Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+                }
+                else
+                {
+                    newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+                }
+                DataSystem.Instance.CreateNotification(student, newNotifications);
+                DataSystem.Instance.CorrectTask(student, courseName, taskName, score);
             }
             else
             {
-                newNotifications += "Notificación -> En el curso " + courseName + ", en la tarea " + taskName + ", tu calificación es de " + score + " puntos.";
+                throw new ArgumentException("No tienes los permisos para realizar esta operación.");
             }
-            DataSystem.Instance.CreateNotification(student, newNotifications);
         }
 
-        public bool TeacherLogin(string mail, string password)
+        public Guid TeacherLogin(User login)
         {
-            User user = new User() { Email = mail, Password = password };
-            Teacher teacherLog = new Teacher() { User = user };
+            Teacher teacherLog = new Teacher() { User = login };
             return DataSystem.Instance.CheckTeacherPassword(teacherLog);
+        }
+
+        public List<string> GetLogs()
+        {
+            return DataSystem.Instance.Logs.ConvertAll(l => l.ToString());
+        }
+
+        public List<string> GetLogsByType(int typeLog)
+        {
+            return DataSystem.Instance.GetLogsByType(typeLog).ConvertAll(l=>l.ToString());
         }
     }
 }

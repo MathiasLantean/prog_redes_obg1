@@ -155,6 +155,7 @@ namespace RouteController
             {
                 Student studentSub = DataSystem.Instance.Students.Find(x => x.Equals(student));
                 course.Students.Add(new Tuple<Student, int>(studentSub, 0));
+                DataSystem.Instance.Suscribe(studentSub, course);
             }
         }
 

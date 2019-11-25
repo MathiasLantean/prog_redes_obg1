@@ -1,4 +1,5 @@
-﻿using RemotingServiceInterface.RemotingModels;
+﻿using Domain;
+using RemotingServiceInterface.RemotingModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,11 @@ namespace RemotingServiceInterface
 {
     public interface IRemotingService
     {
-        bool TeacherLogin(string mail, string password);
-        List<string> GetCoursesWithTasksToCorrect();
+        Guid TeacherLogin(User login);
+        Teacher AddTeacher(Teacher teacher);
+        Teacher GetTeacher(string email);
+        List<string> GetCoursesWithTasksToCorrect(Guid token);
         List<string> GetStudentsToCorrect(string course, string task);
-        List<string> GetTasksToCorrect(string course);
-        void ScoreStudent(string courseName, string taskName, int studentNumber, int score);
+        void ScoreStudent(Guid token, string courseName, string taskName, int studentNumber, int score);
     }
 }

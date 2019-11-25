@@ -17,6 +17,8 @@ namespace Domain
         public List<Tuple<Student, string>> Notifications { get; set; }
         public List<Course> Courses { get; }
         public List<Teacher> Teachers { get; }
+        public List<Log> Logs { get; }
+        public List<Guid> TeachersLoggeds { get; }
 
         private static readonly object adminsLock= new object();
         private static readonly object studentslock = new object();
@@ -24,6 +26,8 @@ namespace Domain
         private static readonly object notificationslock = new object();
         private static readonly object studentloggedlock = new object();
         private static readonly object teacherslock = new object();
+        private static readonly object logslock = new object();
+        private static readonly object teachersloggedslock = new object();
 
         private DataSystem()
         {
@@ -33,6 +37,8 @@ namespace Domain
             this.Notifications = new List<Tuple<Student, string>>();
             this.Admins = new List<Admin>();
             this.Teachers = new List<Teacher>();
+            this.Logs = new List<Log>();
+            this.TeachersLoggeds = new List<Guid>();
             this.Admins.Add(new Admin());
         }
 
@@ -51,33 +57,57 @@ namespace Domain
             }
         }
 
-        public bool CheckAdminPassword(Admin adminToLogin)
+        public Guid CheckAdminPassword(Admin adminToLogin)
         {
             lock (adminsLock)
             {
                 try
                 {
                     Admin currentAdmin = this.Admins. Find(x =>x.Equals(adminToLogin));
-                    return currentAdmin.User.Password == adminToLogin.User.Password;
+                    if (currentAdmin.User.Password == adminToLogin.User.Password)
+                    {
+                        lock (teachersloggedslock)
+                        {
+                            Guid token = Guid.NewGuid();
+                            this.TeachersLoggeds.Add(token);
+                            return token;
+                        }
+                    }
+                    else
+                    {
+                        return Guid.Empty;
+                    }
                 }catch
                 {
-                    return false;
+                    return Guid.Empty;
                 }
             }
         }
 
-        public bool CheckTeacherPassword(Teacher teacherToLogin)
+        public Guid CheckTeacherPassword(Teacher teacherToLogin)
         {
             lock (teacherslock)
             {
                 try
                 {
                     Teacher currentTeacher = this.Teachers.Find(x => x.Equals(teacherToLogin));
-                    return currentTeacher.User.Password == teacherToLogin.User.Password;
+                    if (currentTeacher.User.Password == teacherToLogin.User.Password)
+                    {
+                        lock (teachersloggedslock)
+                        {
+                            Guid token = Guid.NewGuid();
+                            this.TeachersLoggeds.Add(token);
+                            return token;
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentException("El correo electrónico o contraseña es incorrecto.");
+                    }
                 }
                 catch
                 {
-                    return false;
+                    throw new ArgumentException("No existe un docente con ese correo electrónico.");
                 }
             }
         }
@@ -91,7 +121,11 @@ namespace Domain
                 {
                     studentToAdd.Number = Student.LastStudentRegistered++;
                     this.Students.Add(studentToAdd);
-                    return true;
+                    lock (logslock)
+                    {
+                        this.Logs.Add(new Log(DateTime.Now, "Se ha creado al estudiante: "+ studentToAdd.Number +" ("+ studentToAdd.User.Email + ").", 0));
+                        return true;
+                    }
                 }
             }
             return false;
@@ -128,7 +162,11 @@ namespace Domain
                 if (!this.Teachers.Contains(teacher))
                 {
                     this.Teachers.Add(teacher);
-                    return teacher;
+                    lock (logslock)
+                    {
+                        this.Logs.Add(new Log(DateTime.Now, "Se ha creado al docente: " + teacher.Name + " " + teacher.Surname + " (" + teacher.User.Email + ").", 1));
+                        return teacher;
+                    }
                 }
                 else
                 {
@@ -166,13 +204,27 @@ namespace Domain
             {
                 if (!DataSystem.Instance.Courses.Contains(courseToAdd))
                 {
+
                     this.Courses.Add(courseToAdd);
-                    return true;
-                }else
+                    lock (logslock)
+                    {
+                        this.Logs.Add(new Log(DateTime.Now, "Se ha creado el curso: " + courseToAdd.Name, 2));
+                        return true;
+                    }
+                }
+                else
                 {
                     return false;
                 }
                 
+            }
+        }
+
+        public void Suscribe(Student studentSub, Course course)
+        {
+            lock (logslock)
+            {
+                this.Logs.Add(new Log(DateTime.Now, "Es estudiante " + studentSub.Number + " se ha inscripto al curso " + course.Name + ".", 4));
             }
         }
 
@@ -181,7 +233,16 @@ namespace Domain
             lock (courseslock)
             {
                 this.Courses.Remove(courseToRemove);
+                lock (logslock)
+                {
+                    this.Logs.Add(new Log(DateTime.Now, "Se ha removido el curso: " + courseToRemove.Name, 3));
+                }
             }
+        }
+
+        public bool ExistToken(Guid token)
+        {
+            return this.TeachersLoggeds.Contains(token);
         }
 
         public void CreateNotification(Student student, string newNotifications)
@@ -229,6 +290,19 @@ namespace Domain
                 }
             }
             return studentCourses;
+        }
+
+        public void CorrectTask(Student student, string courseName, string taskName, int score)
+        {
+            lock (logslock)
+            {
+                this.Logs.Add(new Log(DateTime.Now, "Se ha calificado al estudiante " + student.Number + " en la tarea "+taskName+" del curso "+courseName+", su calificación fué: "+ score +".", 5));
+            }
+        }
+
+        public List<Log> GetLogsByType(int typeLog)
+        {
+            return this.Logs.FindAll(l => l.Type == (LogType)typeLog);
         }
     }
 }

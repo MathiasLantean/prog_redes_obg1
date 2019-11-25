@@ -52,13 +52,15 @@ namespace ServerConsole
                 string username;
                 string pass;
                 bool connPass = false;
+                Guid adminToken = Guid.Empty;
                 while (!connPass)
                 {
                     Console.Write("Ingresar nombre usuario: ");
                     username = Console.ReadLine();
                     Console.Write("Ingresar constraseña: ");
                     pass = Console.ReadLine();
-                    connPass = server.LoginAdmin(username, pass);
+                    adminToken = server.LoginAdmin(username, pass);
+                    connPass = !adminToken.Equals(Guid.Empty); 
                     if (!connPass)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
@@ -210,7 +212,7 @@ namespace ServerConsole
                                                     Console.ReadLine();
                                                     break;
                                                 case 3:
-                                                    List<string> coursesWithTasksToCorrect = await getCoursesWithTasksToCorrect().ConfigureAwait(false);
+                                                    List<string> coursesWithTasksToCorrect = await getCoursesWithTasksToCorrect(adminToken).ConfigureAwait(false);
                                                     if (coursesWithTasksToCorrect.Count > 0)
                                                     {
                                                         Console.WriteLine("Ingrese la posición del curso del que desea corregir una tarea: ");
@@ -226,7 +228,7 @@ namespace ServerConsole
                                                         int studentNumber = Int32.Parse(studentsToCorrect[studentToCorrect - 1].Split(' ')[0]);
                                                         Console.WriteLine("Ingrese la nota(1-"+ tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0] + "): ");
                                                         int score = await selectMenuOption(1, Int32.Parse(tasksToCorrect[taskToCorrect - 1].Split('[')[1].Split(' ')[2].Split(']')[0])).ConfigureAwait(false);
-                                                        server.ScoreStudent(courseName,taskName, studentNumber, score);
+                                                        server.ScoreStudent(adminToken,courseName, taskName, studentNumber, score);
                                                         Console.ForegroundColor = ConsoleColor.Green;
                                                         Console.WriteLine("Estudiante calificado con éxito.");
                                                         Console.ResetColor();
@@ -300,9 +302,9 @@ namespace ServerConsole
             return courses;
         }
 
-        private static async Task<List<string>> getCoursesWithTasksToCorrect()
+        private static async Task<List<string>> getCoursesWithTasksToCorrect(Guid adminToken)
         {
-            List<string> courses = server.GetCoursesWithTasksToCorrect();
+            List<string> courses = server.GetCoursesWithTasksToCorrect(adminToken);
             if (courses.Count > 0)
             {
                 for (int i = 0; i < courses.Count; i++)
