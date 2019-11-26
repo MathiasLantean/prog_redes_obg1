@@ -1,0 +1,160 @@
+{
+	"info": {
+		"_postman_id": "0d661159-805e-400b-958b-a776d98f72f8",
+		"name": "ProgRedes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "{{url}}/teacher/",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Name\" : \"Nombre\",\n\t\"Surname\" : \"Apellido\",\n\t\"User\" : {\n\t\t\"Email\" : \"mail@mail.com\",\n\t\t\"Password\" : \"Contraseña\"\n\t}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/teacher/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"teacher",
+						""
+					]
+				},
+				"description": "Crear docente"
+			},
+			"response": []
+		},
+		{
+			"name": "{{url}}/login/",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Email\" : \"mail@mail.com\",\n\t\"Password\" : \"Contraseña\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/login/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"login",
+						""
+					]
+				},
+				"description": "Iniciar sesión"
+			},
+			"response": []
+		},
+		{
+			"name": "{{url}}/tasks/d53fcf13-c70b-4960-863b-60f29996f4ee",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/tasks/5cd35642-5039-4c19-a746-a61620d3d963",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"tasks",
+						"5cd35642-5039-4c19-a746-a61620d3d963"
+					]
+				},
+				"description": "Obtener tareas pendientes de corrección."
+			},
+			"response": []
+		},
+		{
+			"name": "{{url}}/tasks/d53fcf13-c70b-4960-863b-60f29996f4ee/curso/tarea1/200000/100",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/tasks/5cd35642-5039-4c19-a746-a61620d3d963/curso/tarea1/200000/10",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"tasks",
+						"5cd35642-5039-4c19-a746-a61620d3d963",
+						"curso",
+						"tarea1",
+						"200000",
+						"10"
+					]
+				},
+				"description": "Corregir la tarea de un estudiante."
+			},
+			"response": []
+		},
+		{
+			"name": "{{url}}/logs/",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/logs/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"logs",
+						""
+					]
+				},
+				"description": "Obtener todos los logs"
+			},
+			"response": []
+		},
+		{
+			"name": "{{url}}/logs/2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/logs/2",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"logs",
+						"2"
+					]
+				},
+				"description": "Obtener logs por tipo de evento."
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

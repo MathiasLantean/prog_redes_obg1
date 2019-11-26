@@ -16,6 +16,7 @@ using RemotingServiceInterface;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
+using System.Messaging;
 
 namespace ServerLogic
 {
@@ -25,6 +26,7 @@ namespace ServerLogic
         private DataSystem data = DataSystem.Instance;
         private static TcpListener _tcpListener;
         private TcpChannel remotingChannel;
+        string queuePath = ConfigurationManager.AppSettings["LocalPrivateQueue"];
 
         public async Task Start(bool _isServerRunning)
         {
@@ -40,6 +42,12 @@ namespace ServerLogic
                 _tcpListener.Start(100);
 
                 InitRemoting(remotingPort, remotingUri);
+
+                data.SetQuewePath(queuePath);
+                if (!MessageQueue.Exists(queuePath))
+                {
+                    MessageQueue.Create(queuePath);
+                }
 
                 while (_isServerRunning)
                 {
@@ -303,7 +311,7 @@ namespace ServerLogic
 
         public List<string> GetLogs()
         {
-            return DataSystem.Instance.Logs.ConvertAll(l => l.ToString());
+            return DataSystem.Instance.GetLogs().ConvertAll(l => l.ToString());
         }
 
         public List<string> GetLogsByType(int typeLog)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,6 +16,8 @@ namespace Domain
         AddStudentToCourse,
         CorrectTask
     }
+
+    [Serializable]
     public class Log
     {
         public DateTime Date { get; set; }
@@ -31,8 +34,7 @@ namespace Domain
 
         public override string ToString()
         {
-            return "Fecha: " + this.Date.ToString("dd/MM/yyyy") + " -> Descripción: "+this.Description;
+            return "Fecha: " + this.Date.ToString("dd/MM/yyyy HH:mm:ss") + " -> Descripción: "+this.Description;
         }
-
     }
 }
